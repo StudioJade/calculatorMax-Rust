@@ -1,0 +1,30 @@
+[package]
+name = "calculator-max"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# GUI框架
+egui = "0.28"
+eframe = "0.28"
+
+# 数学计算
+statrs = "0.17"
+rand = "0.9"
+
+# 表达式解析
+meval = "0.2"
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 其他实用工具
+anyhow = "1.0"
+thiserror = "1.0"
+
+[features]
+default = ["embedded-fonts"]
+embedded-fonts = []
