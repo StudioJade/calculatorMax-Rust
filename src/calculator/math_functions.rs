@@ -1,6 +1,6 @@
 //! Mathematical functions implementation
 
-use std::f64::consts::{PI, E};
+use std::f64::consts::{E, PI};
 
 /// Calculates the area of a triangle
 pub fn triangle_area(base: f64, height: f64) -> f64 {
@@ -26,7 +26,7 @@ pub fn trapezoid_area(base1: f64, base2: f64, height: f64) -> f64 {
 pub fn heron_triangle_area(a: f64, b: f64, c: f64) -> Option<f64> {
     let s = (a + b + c) / 2.0;
     let area_squared = s * (s - a) * (s - b) * (s - c);
-    
+
     if area_squared >= 0.0 {
         Some(area_squared.sqrt())
     } else {

@@ -1,10 +1,10 @@
 //! History management module
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Write, BufWriter};
-use anyhow::Result;
+use std::io::{BufWriter, Write};
 
 /// Manages calculation history
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,16 +44,16 @@ impl HistoryManager {
         }
         result
     }
-    
+
     /// Saves history to a file
     pub fn save_to_file(&self, filename: &str) -> Result<()> {
         let file = File::create(filename)?;
         let mut writer = BufWriter::new(file);
-        
+
         for (expr, res) in &self.history {
             writeln!(writer, "{} = {}", expr, res)?;
         }
-        
+
         Ok(())
     }
 }
