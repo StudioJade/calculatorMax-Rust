@@ -1,3 +1,4 @@
+[![CI](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml)  
 # 计算器 Max - Rust 版本
 
 一个功能强大的计算器应用程序，使用 Rust 编写，具有图形用户界面和广泛的数学功能。
