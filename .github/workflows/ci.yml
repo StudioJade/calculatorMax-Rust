@@ -8,8 +8,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTC_WRAPPER: sccache
-  SCCACHE_GHA_ENABLED: "true"
 
 jobs:
   build:
@@ -32,6 +30,16 @@ jobs:
       with:
         version: "v0.7.4"
         
+    - name: Probe sccache and set wrapper
+      run: |
+        set -e
+        if sccache --version >/dev/null 2>&1 && sccache --show-stats >/dev/null 2>&1; then
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+        else
+          echo "RUSTC_WRAPPER=" >> $GITHUB_ENV
+          echo "SCCACHE_NO_DAEMON=1" >> $GITHUB_ENV
+          echo "sccache probe failed, disabling sccache for build."
+        fi
     - name: Cache Cargo registry
       uses: actions/cache@v4
       with:
