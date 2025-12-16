@@ -27,6 +27,18 @@ impl Language {
         }
     }
 
+    /// Get the display name of the language (fixed, not localized)
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Language::SimplifiedChinese => "简体中文",
+            Language::TraditionalChineseTW => "繁体中文",
+            Language::TraditionalChineseHK => "繁体中文",
+            Language::English => "English",
+            Language::Russian => "Русский",
+            Language::Cat => "喵语",
+        }
+    }
+
     /// Get all supported languages
     pub fn all() -> Vec<Language> {
         vec![
@@ -61,9 +73,21 @@ impl Translations {
     /// Load translations from embedded JSON files
     fn load_from_json(&mut self) {
         let translations_data = [
-            (Language::SimplifiedChinese, "zh-CN", include_str!("locales/zh-CN.json")),
-            (Language::TraditionalChineseTW, "zh-TW", include_str!("locales/zh-TW.json")),
-            (Language::TraditionalChineseHK, "zh-HK", include_str!("locales/zh-HK.json")),
+            (
+                Language::SimplifiedChinese,
+                "zh-CN",
+                include_str!("locales/zh-CN.json"),
+            ),
+            (
+                Language::TraditionalChineseTW,
+                "zh-TW",
+                include_str!("locales/zh-TW.json"),
+            ),
+            (
+                Language::TraditionalChineseHK,
+                "zh-HK",
+                include_str!("locales/zh-HK.json"),
+            ),
             (Language::English, "en", include_str!("locales/en.json")),
             (Language::Russian, "ru", include_str!("locales/ru.json")),
             (Language::Cat, "cat", include_str!("locales/cat.json")),

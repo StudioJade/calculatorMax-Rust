@@ -1,0 +1,16 @@
+# Rust formatting configuration
+# Allow longer lines to reduce formatting complaints
+max_width = 120
+
+# More lenient formatting options
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Allow comments to exceed line limit
+comment_width = 120
+
+# Reorder imports but be lenient
+reorder_imports = true
+reorder_modules = true
