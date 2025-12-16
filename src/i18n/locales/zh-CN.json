@@ -1,0 +1,16 @@
+{
+  "app_title": "计算器 Max",
+  "expression": "表达式:",
+  "calculate": "计算",
+  "result": "结果:",
+  "memory": "记忆 (m):",
+  "history": "历史记录",
+  "clear_history": "清空历史记录",
+  "settings": "设置",
+  "exit": "退出",
+  "safe_mode": "安全模式",
+  "save_history": "保存历史记录",
+  "filename": "文件名:",
+  "settings_heading": "设置",
+  "history_heading": "历史记录"
+}

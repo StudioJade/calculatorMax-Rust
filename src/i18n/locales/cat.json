@@ -1,0 +1,16 @@
+{
+  "app_title": "喵喵计算器 Max",
+  "expression": "喵喵:",
+  "calculate": "喵喵",
+  "result": "喵果:",
+  "memory": "喵記 (m):",
+  "history": "喵史",
+  "clear_history": "清空喵史",
+  "settings": "喵设",
+  "exit": "喵出",
+  "safe_mode": "安全喵式",
+  "save_history": "保存喵史",
+  "filename": "喵件名:",
+  "settings_heading": "喵设",
+  "history_heading": "喵史"
+}

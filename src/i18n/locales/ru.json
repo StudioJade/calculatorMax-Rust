@@ -1,0 +1,16 @@
+{
+  "app_title": "Калькулятор Max",
+  "expression": "Выражение:",
+  "calculate": "Вычислить",
+  "result": "Результат:",
+  "memory": "Память (m):",
+  "history": "История",
+  "clear_history": "Очистить историю",
+  "settings": "Настройки",
+  "exit": "Выход",
+  "safe_mode": "Безопасный режим",
+  "save_history": "Сохранить историю",
+  "filename": "Имя файла:",
+  "settings_heading": "Настройки",
+  "history_heading": "История"
+}

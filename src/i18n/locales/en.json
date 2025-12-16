@@ -1,0 +1,16 @@
+{
+  "app_title": "Calculator Max",
+  "expression": "Expression:",
+  "calculate": "Calculate",
+  "result": "Result:",
+  "memory": "Memory (m):",
+  "history": "History",
+  "clear_history": "Clear History",
+  "settings": "Settings",
+  "exit": "Exit",
+  "safe_mode": "Safe Mode",
+  "save_history": "Save History",
+  "filename": "Filename:",
+  "settings_heading": "Settings",
+  "history_heading": "History"
+}

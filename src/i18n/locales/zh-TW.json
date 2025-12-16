@@ -1,0 +1,16 @@
+{
+  "app_title": "計算機 Max",
+  "expression": "運算式:",
+  "calculate": "計算",
+  "result": "結果:",
+  "memory": "記憶 (m):",
+  "history": "歷史記錄",
+  "clear_history": "清空歷史記錄",
+  "settings": "設定",
+  "exit": "離開",
+  "safe_mode": "安全模式",
+  "save_history": "儲存歷史記錄",
+  "filename": "檔案名稱:",
+  "settings_heading": "設定",
+  "history_heading": "歷史記錄"
+}
