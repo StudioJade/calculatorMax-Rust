@@ -83,9 +83,7 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
         fonts
             .families
             .insert(egui::FontFamily::Proportional, font_family.clone());
-        fonts
-            .families
-            .insert(egui::FontFamily::Monospace, font_family);
+        fonts.families.insert(egui::FontFamily::Monospace, font_family);
     }
 
     ctx.set_fonts(fonts);
@@ -170,8 +168,7 @@ impl CalculatorApp {
             Ok(value) => {
                 self.result = value.to_string();
                 // Add to history
-                self.history
-                    .add(self.expression.clone(), self.result.clone());
+                self.history.add(self.expression.clone(), self.result.clone());
                 // Store in memory
                 self.memory = value;
             }
@@ -230,10 +227,7 @@ impl eframe::App for CalculatorApp {
             ui.horizontal(|ui| {
                 ui.label(self.translations.get("expression", self.language));
                 ui.text_edit_singleline(&mut self.expression);
-                if ui
-                    .button(self.translations.get("calculate", self.language))
-                    .clicked()
-                {
+                if ui.button(self.translations.get("calculate", self.language)).clicked() {
                     self.calculate();
                 }
             });
@@ -266,31 +260,19 @@ impl eframe::App for CalculatorApp {
             ui.separator();
 
             ui.horizontal_wrapped(|ui| {
-                if ui
-                    .button(self.translations.get("history", self.language))
-                    .clicked()
-                {
+                if ui.button(self.translations.get("history", self.language)).clicked() {
                     self.show_history = !self.show_history;
                 }
 
-                if ui
-                    .button(self.translations.get("clear_history", self.language))
-                    .clicked()
-                {
+                if ui.button(self.translations.get("clear_history", self.language)).clicked() {
                     self.clear_history();
                 }
 
-                if ui
-                    .button(self.translations.get("settings", self.language))
-                    .clicked()
-                {
+                if ui.button(self.translations.get("settings", self.language)).clicked() {
                     self.show_settings = !self.show_settings;
                 }
 
-                if ui
-                    .button(self.translations.get("exit", self.language))
-                    .clicked()
-                {
+                if ui.button(self.translations.get("exit", self.language)).clicked() {
                     std::process::exit(0);
                 }
             });

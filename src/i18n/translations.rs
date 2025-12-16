@@ -1,7 +1,7 @@
 //! Translations for different languages
 
-use std::collections::HashMap;
 use serde_json::{json, Value};
+use std::collections::HashMap;
 
 /// Supported languages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -73,11 +73,7 @@ impl Translations {
     /// Load translations from embedded JSON files
     fn load_from_json(&mut self) {
         let translations_data = [
-            (
-                Language::SimplifiedChinese,
-                "zh-CN",
-                include_str!("locales/zh-CN.json"),
-            ),
+            (Language::SimplifiedChinese, "zh-CN", include_str!("locales/zh-CN.json")),
             (
                 Language::TraditionalChineseTW,
                 "zh-TW",
