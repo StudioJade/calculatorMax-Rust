@@ -40,6 +40,33 @@ cargo build --release
 cargo run
 ```
 
+## 开发提示：加速本地编译 ⚡
+
+GUI 依赖 `egui`/`eframe` 在迭代开发时会显著增加编译时间。下面是一些加速建议：
+
+- 快速构建（仅库，跳过 GUI）：
+
+```bash
+# 构建库而不包含 GUI（更快）
+cargo build --no-default-features --lib
+```
+
+- 快速检查（推荐）：
+
+```bash
+# 快速检查不包含 GUI 的改动
+cargo check --no-default-features
+```
+
+项目包含一个帮助脚本 `./scripts/fast-build.sh`，运行它可以更快捷地执行无 GUI 的构建。
+
+当你需要构建完整应用（含 GUI）时，使用默认构建：
+
+```bash
+# 构建包含 GUI 的完整可执行文件
+cargo build
+```
+
 ## 使用方式
 
 1. 在输入字段中输入数学表达式

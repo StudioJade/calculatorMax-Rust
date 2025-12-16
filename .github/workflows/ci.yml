@@ -10,6 +10,73 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Fast checks for iteration: skip GUI feature to save compile time
+  fast-check:
+    name: Fast check (no GUI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          autocrlf: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install sccache
+        uses: mozilla/sccache-action@v0.0.4
+        with:
+          version: "v0.7.4"
+
+      - name: Probe sccache and set wrapper
+        shell: bash
+        run: |
+          set -e
+          if sccache --version >/dev/null 2>&1 && sccache --show-stats >/dev/null 2>&1; then
+            echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          else
+            echo "RUSTC_WRAPPER=" >> $GITHUB_ENV
+            echo "SCCACHE_NO_DAEMON=1" >> $GITHUB_ENV
+            echo "sccache probe failed, disabling sccache for build."
+          fi
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-fast
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache sccache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/sccache
+          key: ${{ runner.os }}-sccache-${{ hashFiles('**/Cargo.lock') }}-fast
+          restore-keys: |
+            ${{ runner.os }}-sccache-
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Fast build and tests (no GUI)
+        run: |
+          cargo check --no-default-features --all-targets --all-features --verbose
+          cargo test --no-default-features --verbose
+
+      - name: Upload fast-check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-check-logs
+          path: |
+            target/debug/**
+
   build:
     strategy:
       matrix:

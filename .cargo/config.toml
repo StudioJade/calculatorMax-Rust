@@ -12,3 +12,11 @@ index = "https://rsproxy.cn/crates.io-index"
 
 [net]
 git-fetch-with-cli = true
+
+[build]
+# Use multiple jobs in parallel; adjust according to your CPU (e.g., 8)
+jobs = 4
+
+[term]
+# Give clearer build progress
+verbose = true

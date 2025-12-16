@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# GUI框架
-egui = "0.28"
-eframe = "0.28"
+# GUI框架 (optional to speed iterative builds)
+egui = { version = "0.28", optional = true }
+eframe = { version = "0.28", optional = true }
 
 # 数学计算
 statrs = "0.17"
@@ -25,6 +25,11 @@ toml = "0.8"
 # 错误处理
 anyhow = "1.0"
 thiserror = "1.0"
+
+[features]
+# Keep GUI enabled by default for normal builds; disable with --no-default-features for a faster dev build
+default = ["gui"]
+gui = ["egui", "eframe"]
 
 [profile.release]
 opt-level = 3
