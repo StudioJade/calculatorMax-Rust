@@ -3,7 +3,9 @@
 pub mod evaluator;
 pub mod history;
 pub mod math_functions;
+pub mod mods;
 pub mod random;
 
 pub use evaluator::Evaluator;
 pub use history::HistoryManager;
+pub use mods::ModManager;

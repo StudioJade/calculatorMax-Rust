@@ -264,7 +264,10 @@ impl eframe::App for CalculatorApp {
                     self.show_history = !self.show_history;
                 }
 
-                if ui.button(self.translations.get("clear_history", self.language)).clicked() {
+                if ui
+                    .button(self.translations.get("clear_history", self.language))
+                    .clicked()
+                {
                     self.clear_history();
                 }
 
