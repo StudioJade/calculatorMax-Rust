@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 //! Calculator Max - A powerful calculator application written in Rust
 //!
 //! This is the main entry point for the application.
