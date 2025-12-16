@@ -1,0 +1,11 @@
+# Force Unix line endings for all files
+* text=auto eol=lf
+*.rs text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.cmfun text eol=lf
+
+# Binary files
+*.exe binary
+*.o binary
