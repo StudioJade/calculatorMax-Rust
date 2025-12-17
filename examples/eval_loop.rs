@@ -3,7 +3,7 @@ use calculator_max::calculator::math_functions::*;
 use meval::Context;
 use std::time::Instant;
 
-fn bench_evaluator_parse_and_eval(ev: &Evaluator, expr: &str, iterations: usize) -> f64 {
+fn bench_evaluator_parse_and_eval(ev: &mut Evaluator, expr: &str, iterations: usize) -> f64 {
     let mut sum = 0.0_f64;
     let start = Instant::now();
     for _ in 0..iterations {
@@ -66,7 +66,7 @@ fn bench_parse_then_eval_with_context(expr: &str, iterations: usize, ctx: &Conte
 }
 
 fn main() {
-    let ev = Evaluator::new();
+    let mut ev = Evaluator::new();
     let exprs = [
         "2+2*3",
         "sin(pi/4) + cos(pi/4)",
@@ -81,9 +81,7 @@ fn main() {
     let ctx = make_context();
 
     for e in exprs.iter() {
-        total += bench_evaluator_parse_and_eval(&ev, e, iterations);
+        total += bench_evaluator_parse_and_eval(&mut ev, e, iterations);
         total += bench_parse_then_eval_with_context(e, iterations, &ctx);
-    }
-
-    println!("total checksum={}", total);
+    }    println!("total checksum={}", total);
 }

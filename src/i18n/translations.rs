@@ -1,6 +1,5 @@
 //! Translations for different languages
 
-use serde_json::{json, Value};
 use std::collections::HashMap;
 
 /// Supported languages

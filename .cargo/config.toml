@@ -1,22 +1,4 @@
 [source.crates-io]
-replace-with = 'rsproxy-sparse'
-
-[source.rsproxy]
-registry = "https://rsproxy.cn/crates.io-index"
-
-[source.rsproxy-sparse]
-registry = "sparse+https://rsproxy.cn/index/"
-
-[registries.rsproxy]
-index = "https://rsproxy.cn/crates.io-index"
-
-[net]
-git-fetch-with-cli = true
-
-[build]
-# Use multiple jobs in parallel; adjust according to your CPU (e.g., 8)
-jobs = 4
-
-[term]
-# Give clearer build progress
-verbose = true
+replace-with = "aliyun"
+[source.aliyun]
+registry = "sparse+https://mirrors.aliyun.com/crates.io-index/"

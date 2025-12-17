@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn test_basic_arithmetic() {
-        let evaluator = Evaluator::new();
+        let mut evaluator = Evaluator::new();
 
         assert_eq!(evaluator.evaluate("2 + 3").unwrap(), 5.0);
         assert_eq!(evaluator.evaluate("10 - 4").unwrap(), 6.0);
@@ -29,7 +29,7 @@ mod tests {
 
     #[test]
     fn test_math_constants() {
-        let evaluator = Evaluator::new();
+        let mut evaluator = Evaluator::new();
 
         assert!((evaluator.evaluate("pi").unwrap() - std::f64::consts::PI).abs() < 1e-10);
         assert!((evaluator.evaluate("e").unwrap() - std::f64::consts::E).abs() < 1e-10);
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_trigonometric_functions() {
-        let evaluator = Evaluator::new();
+        let mut evaluator = Evaluator::new();
 
         assert!((evaluator.evaluate("sin(0)").unwrap() - 0.0).abs() < 1e-10);
         assert!((evaluator.evaluate("cos(0)").unwrap() - 1.0).abs() < 1e-10);
@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_geometric_functions() {
-        let evaluator = Evaluator::new();
+        let mut evaluator = Evaluator::new();
 
         assert_eq!(evaluator.evaluate("s_tri(10, 5)").unwrap(), 25.0);
         assert_eq!(evaluator.evaluate("s_rect(4, 6)").unwrap(), 24.0);

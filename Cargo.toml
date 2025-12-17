@@ -28,9 +28,9 @@ thiserror = "1.0"
 
 [features]
 # Keep GUI enabled by default for normal builds; disable with --no-default-features for a faster dev build
-default = ["gui"]
+default = ["gui", "embedded-fonts"]
 gui = ["egui", "eframe"]
-
+embedded-fonts = []
 [profile.release]
 opt-level = 3
 lto = true

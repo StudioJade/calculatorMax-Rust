@@ -12,5 +12,14 @@
   "save_history": "Сохранить историю",
   "filename": "Имя файла:",
   "settings_heading": "Настройки",
-  "history_heading": "История"
+  "history_heading": "История",
+  "create_mod": "Создать мод",
+  "create_mod_heading": "Создать новый мод",
+  "mod_name": "Название мода:",
+  "mod_description": "Описание:",
+  "mod_required_vars": "Требуемые переменные (через запятую):\ne.g. a,b,c",
+  "mod_expression": "Выражение:\ne.g. a + b * c",
+  "mod_filename": "Имя файла (без расширения):\ne.g. my_mod",
+  "save_mod": "Сохранить мод",
+  "cancel": "Отмена"
 }

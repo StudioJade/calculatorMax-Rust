@@ -75,6 +75,16 @@ impl ModManager {
         Ok(())
     }
 
+    /// Reload all mods from the mods directory
+    pub fn reload_mods(&mut self) -> Result<(), anyhow::Error> {
+        // Clear existing mods and reload
+        self.mods.clear();
+        self.loaded = false;
+        self.load_mods_from_dir()?;
+        self.loaded = true;
+        Ok(())
+    }
+
     fn load_mods_from_dir(&mut self) -> Result<(), anyhow::Error> {
         let mods_dir = Path::new("mods");
 

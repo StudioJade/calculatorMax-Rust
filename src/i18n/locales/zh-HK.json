@@ -12,5 +12,14 @@
   "save_history": "儲存歷史記錄",
   "filename": "檔案名稱:",
   "settings_heading": "設定",
-  "history_heading": "歷史記錄"
+  "history_heading": "歷史記錄",
+  "create_mod": "創建Mod",
+  "create_mod_heading": "創建新Mod",
+  "mod_name": "Mod名稱:",
+  "mod_description": "描述:",
+  "mod_required_vars": "所需變量(逗號分隔):\ne.g. a,b,c",
+  "mod_expression": "表達式:\ne.g. a + b * c",
+  "mod_filename": "文件名(不含擴展名):\ne.g. my_mod",
+  "save_mod": "保存Mod",
+  "cancel": "取消"
 }

@@ -103,12 +103,18 @@ impl Evaluator {
         self.safe_mode = safe;
     }
 
+    /// Reload all mods
+    pub fn reload_mods(&mut self) -> Result<(), anyhow::Error> {
+        self.mod_manager.reload_mods()
+    }
+
     /// Evaluates a mathematical expression
-    pub fn evaluate(&self, expression: &str) -> Result<f64> {
+    pub fn evaluate(&mut self, expression: &str) -> Result<f64> {
         // Check if expression is a mod function call (name(args))
         if let Some(paren_pos) = expression.find('(') {
             let func_name = expression[..paren_pos].trim();
-            if let Some(mod_def) = self.mod_manager.get_mod(func_name) {
+            // We only need to check if the mod exists, we don't need to use the mod_def value here
+            if self.mod_manager.get_mod(func_name).is_some() {
                 // This is a mod function call
                 return self.evaluate_mod(func_name, expression);
             }

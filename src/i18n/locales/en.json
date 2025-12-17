@@ -12,5 +12,14 @@
   "save_history": "Save History",
   "filename": "Filename:",
   "settings_heading": "Settings",
-  "history_heading": "History"
+  "history_heading": "History",
+  "create_mod": "Create Mod",
+  "create_mod_heading": "Create New Mod",
+  "mod_name": "Mod Name:",
+  "mod_description": "Description:",
+  "mod_required_vars": "Required Variables (comma separated):\ne.g. a,b,c",
+  "mod_expression": "Expression:\ne.g. a + b * c",
+  "mod_filename": "Filename (without extension):\ne.g. my_mod",
+  "save_mod": "Save Mod",
+  "cancel": "Cancel"
 }

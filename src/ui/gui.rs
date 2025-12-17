@@ -4,6 +4,7 @@ use anyhow::Result;
 use eframe::egui;
 
 use crate::calculator::{Evaluator, HistoryManager};
+use crate::calculator::mods::{Mod, ModDesc, ModVar, ModCalc};
 use crate::config::Settings;
 use crate::i18n::translations::{Language, Translations};
 
@@ -70,10 +71,6 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
         let chinese_fonts = [
             "Microsoft YaHei",
             "SimHei",
-            "PingFang SC",
-            "Noto Sans CJK SC",
-            "Source Han Sans SC",
-            "WenQuanYi Micro Hei",
         ];
 
         for font in chinese_fonts.iter() {
@@ -87,17 +84,6 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
     }
 
     ctx.set_fonts(fonts);
-}
-
-// Helper macro to conditionally include font bytes
-macro_rules! include_bytes_opt {
-    ($path:literal) => {
-        if cfg!(feature = "embedded-fonts") {
-            Some(include_bytes!($path))
-        } else {
-            None
-        }
-    };
 }
 
 /// Main application structure
@@ -137,6 +123,37 @@ struct CalculatorApp {
 
     /// Translations
     translations: Translations,
+
+    /// Whether to show mod creator
+    show_mod_creator: bool,
+
+    /// Mod creator state
+    mod_creator: ModCreator,
+}
+
+/// State for the mod creator UI
+#[derive(Debug, Clone)]
+struct ModCreator {
+    /// Name of the mod
+    name: String,
+
+    /// Description of the mod
+    description: String,
+
+    /// Required variables
+    required_vars: String,
+
+    /// Calculation expression
+    expression: String,
+
+    /// Filename for saving
+    filename: String,
+
+    /// Success message
+    success_message: String,
+
+    /// Error message
+    error_message: String,
 }
 
 impl Default for CalculatorApp {
@@ -154,6 +171,22 @@ impl Default for CalculatorApp {
             history_filename: String::new(),
             language: Language::English, // Default to English
             translations: Translations::default(),
+            show_mod_creator: false,
+            mod_creator: ModCreator::default(),
+        }
+    }
+}
+
+impl Default for ModCreator {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            description: String::new(),
+            required_vars: String::new(),
+            expression: String::new(),
+            filename: String::new(),
+            success_message: String::new(),
+            error_message: String::new(),
         }
     }
 }
@@ -184,12 +217,6 @@ impl CalculatorApp {
         self.history.clear();
     }
 
-    /// Toggles safe mode
-    fn toggle_safe_mode(&mut self) {
-        self.settings.safe_mode = !self.settings.safe_mode;
-        self.evaluator.set_safe_mode(self.settings.safe_mode);
-    }
-
     /// Saves history to file
     fn save_history(&mut self) {
         if self.history_filename.is_empty() {
@@ -207,9 +234,81 @@ impl CalculatorApp {
         }
     }
 
-    /// Switches the application language
-    fn switch_language(&mut self, lang: Language) {
-        self.language = lang;
+    /// Saves a mod to file
+    fn save_mod(&mut self) {
+        // Clear previous messages
+        self.mod_creator.success_message.clear();
+        self.mod_creator.error_message.clear();
+
+        // Validate inputs
+        if self.mod_creator.name.is_empty() {
+            self.mod_creator.error_message = "Mod name is required".to_string();
+            return;
+        }
+
+        if self.mod_creator.filename.is_empty() {
+            self.mod_creator.error_message = "Filename is required".to_string();
+            return;
+        }
+
+        // Parse required variables
+        let required_vars: Vec<String> = if self.mod_creator.required_vars.is_empty() {
+            Vec::new()
+        } else {
+            self.mod_creator
+                .required_vars
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        // Create mod structure
+        let mod_def = Mod {
+            desc: ModDesc {
+                name: Some(self.mod_creator.name.clone()),
+            },
+            var: ModVar {
+                needvars: required_vars,
+            },
+            calc: ModCalc {
+                howto: if self.mod_creator.expression.is_empty() {
+                    None
+                } else {
+                    Some(self.mod_creator.expression.clone())
+                },
+            },
+        };
+
+        // Serialize to TOML
+        match toml::to_string_pretty(&mod_def) {
+            Ok(toml_content) => {
+                // Save to file
+                let filename = if self.mod_creator.filename.ends_with(".cmfun") {
+                    self.mod_creator.filename.clone()
+                } else {
+                    format!("{}.cmfun", self.mod_creator.filename)
+                };
+
+                match std::fs::write(format!("mods/{}", filename), toml_content) {
+                    Ok(_) => {
+                        self.mod_creator.success_message = format!("Mod saved to {}", filename);
+                        // Reload mods in the evaluator
+                        if let Err(e) = self.evaluator.reload_mods() {
+                            self.mod_creator.error_message = format!("Mod saved but failed to reload: {}", e);
+                        }
+                        // Reset form
+                        self.mod_creator = ModCreator::default();
+                    }
+                    Err(e) => {
+                        self.mod_creator.error_message = format!("Failed to save mod: {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                self.mod_creator.error_message = format!("Failed to serialize mod: {}", e);
+            }
+        }
     }
 }
 
@@ -278,6 +377,10 @@ impl eframe::App for CalculatorApp {
                 if ui.button(self.translations.get("exit", self.language)).clicked() {
                     std::process::exit(0);
                 }
+
+                if ui.button(self.translations.get("create_mod", self.language)).clicked() {
+                    self.show_mod_creator = !self.show_mod_creator;
+                }
             });
 
             // Show settings if requested
@@ -315,6 +418,56 @@ impl eframe::App for CalculatorApp {
                         self.save_history();
                     }
                 });
+            }
+
+            // Show mod creator if requested
+            if self.show_mod_creator {
+                ui.separator();
+                ui.heading(self.translations.get("create_mod_heading", self.language));
+                
+                // Show success message if any
+                if !self.mod_creator.success_message.is_empty() {
+                    ui.colored_label(egui::Color32::GREEN, &self.mod_creator.success_message);
+                }
+                
+                // Show error message if any
+                if !self.mod_creator.error_message.is_empty() {
+                    ui.colored_label(egui::Color32::RED, &self.mod_creator.error_message);
+                }
+                
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("mod_name", self.language));
+                    ui.text_edit_singleline(&mut self.mod_creator.name);
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("mod_description", self.language));
+                    ui.text_edit_singleline(&mut self.mod_creator.description);
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("mod_required_vars", self.language));
+                    ui.text_edit_singleline(&mut self.mod_creator.required_vars);
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("mod_expression", self.language));
+                    ui.text_edit_singleline(&mut self.mod_creator.expression);
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("mod_filename", self.language));
+                    ui.text_edit_singleline(&mut self.mod_creator.filename);
+                });
+                
+                if ui.button(self.translations.get("save_mod", self.language)).clicked() {
+                    self.save_mod();
+                }
+                
+                if ui.button(self.translations.get("cancel", self.language)).clicked() {
+                    self.show_mod_creator = false;
+                    self.mod_creator = ModCreator::default();
+                }
             }
 
             // Add some spacing
