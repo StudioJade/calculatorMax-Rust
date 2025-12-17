@@ -53,16 +53,29 @@ impl Default for ModCalc {
 #[derive(Debug, Clone)]
 pub struct ModManager {
     mods: HashMap<String, Mod>,
+    loaded: bool,
 }
 
 impl ModManager {
     /// Create a new mod manager
     pub fn new() -> Self {
-        ModManager { mods: HashMap::new() }
+        ModManager { 
+            mods: HashMap::new(),
+            loaded: false,
+        }
     }
 
     /// Load all mods from the mods directory
-    pub fn load_mods(&mut self) -> anyhow::Result<()> {
+    pub fn load_mods(&mut self) -> Result<(), anyhow::Error> {
+        // 使用懒加载机制来减少依赖
+        if !self.loaded {
+            self.load_mods_from_dir()?;
+            self.loaded = true;
+        }
+        Ok(())
+    }
+
+    fn load_mods_from_dir(&mut self) -> Result<(), anyhow::Error> {
         let mods_dir = Path::new("mods");
 
         // If mods directory doesn't exist, just return without error

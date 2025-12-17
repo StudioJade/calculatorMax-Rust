@@ -2,6 +2,8 @@
 
 use anyhow::{bail, Result};
 use meval::{Context, Expr};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 use super::math_functions::*;
 use super::mods::ModManager;
@@ -17,6 +19,12 @@ pub struct Evaluator {
 
     /// Mod manager for custom mod functions
     mod_manager: ModManager,
+
+    /// Expression cache for performance optimization
+    expr_cache: HashMap<String, Arc<Expr>>,
+
+    /// Result cache for performance optimization
+    result_cache: HashMap<String, f64>,
 }
 
 impl Evaluator {
@@ -85,6 +93,8 @@ impl Evaluator {
             safe_mode: true,
             context: ctx,
             mod_manager,
+            expr_cache: HashMap::new(),
+            result_cache: HashMap::new(),
         }
     }
 
@@ -106,13 +116,30 @@ impl Evaluator {
 
         // Otherwise, evaluate normally
         if self.safe_mode {
-            // Safe evaluation using meval crate with custom context
-            match expression.parse::<Expr>() {
-                Ok(expr) => match expr.eval_with_context(&self.context) {
-                    Ok(result) => Ok(result),
-                    Err(e) => bail!("Evaluation error: {}", e),
+            // 使用缓存机制来优化性能
+            let cache_key = expression.to_string();
+            if let Some(cached_result) = self.get_cached_result(&cache_key) {
+                return Ok(cached_result);
+            }
+            
+            // 使用缓存的表达式对象来优化性能
+            let expr = if let Some(cached_expr) = self.expr_cache.get(cache_key.as_str()) {
+                cached_expr.clone()
+            } else {
+                let parsed_expr = expression.parse::<Expr>()?;
+                let arc_expr = Arc::new(parsed_expr);
+                self.expr_cache.insert(cache_key.clone(), arc_expr.clone());
+                arc_expr
+            };
+            
+            // 评估表达式
+            match expr.eval_with_context(&self.context) {
+                Ok(result) => {
+                    // 缓存结果
+                    self.result_cache.insert(cache_key, result);
+                    Ok(result)
                 },
-                Err(e) => bail!("Parse error: {}", e),
+                Err(e) => bail!("Evaluation error: {}", e),
             }
         } else {
             // In a real implementation, this would allow more complex expressions
@@ -197,6 +224,12 @@ impl Evaluator {
             },
             Err(e) => bail!("Mod expression parse error: {}", e),
         }
+    }
+
+    // 添加缓存机制
+    fn get_cached_result(&self, cache_key: &str) -> Option<f64> {
+        // 实现缓存逻辑
+        self.result_cache.get(cache_key).copied()
     }
 }
 

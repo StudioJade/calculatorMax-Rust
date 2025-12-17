@@ -3,28 +3,33 @@
 use std::f64::consts::{E, PI};
 
 /// Calculates the area of a triangle
+#[inline]
 pub fn triangle_area(base: f64, height: f64) -> f64 {
-    base * height / 2.0
+    base * height * 0.5
 }
 
 /// Calculates the area of a rectangle
+#[inline]
 pub fn rectangle_area(width: f64, height: f64) -> f64 {
     width * height
 }
 
 /// Calculates the area of a circle
+#[inline]
 pub fn circle_area(radius: f64) -> f64 {
     PI * radius * radius
 }
 
 /// Calculates the area of a trapezoid
+#[inline]
 pub fn trapezoid_area(base1: f64, base2: f64, height: f64) -> f64 {
-    (base1 + base2) * height / 2.0
+    (base1 + base2) * height * 0.5
 }
 
 /// Calculates the area of a triangle using Heron's formula
+#[inline]
 pub fn heron_triangle_area(a: f64, b: f64, c: f64) -> Option<f64> {
-    let s = (a + b + c) / 2.0;
+    let s = (a + b + c) * 0.5;
     let area_squared = s * (s - a) * (s - b) * (s - c);
 
     if area_squared >= 0.0 {
@@ -35,15 +40,18 @@ pub fn heron_triangle_area(a: f64, b: f64, c: f64) -> Option<f64> {
 }
 
 /// Calculates the hypotenuse of a right triangle using Pythagorean theorem
+#[inline]
 pub fn pythagorean_theorem(a: f64, b: f64) -> f64 {
     (a * a + b * b).sqrt()
 }
 
 /// Provides access to mathematical constants
+#[inline]
 pub fn pi() -> f64 {
     PI
 }
 
+#[inline]
 pub fn e() -> f64 {
     E
 }
