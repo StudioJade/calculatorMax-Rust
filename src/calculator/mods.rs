@@ -59,7 +59,7 @@ pub struct ModManager {
 impl ModManager {
     /// Create a new mod manager
     pub fn new() -> Self {
-        ModManager { 
+        ModManager {
             mods: HashMap::new(),
             loaded: false,
         }

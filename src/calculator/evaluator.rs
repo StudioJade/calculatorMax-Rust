@@ -127,7 +127,7 @@ impl Evaluator {
             if let Some(cached_result) = self.get_cached_result(&cache_key) {
                 return Ok(cached_result);
             }
-            
+
             // 使用缓存的表达式对象来优化性能
             let expr = if let Some(cached_expr) = self.expr_cache.get(cache_key.as_str()) {
                 cached_expr.clone()
@@ -137,14 +137,14 @@ impl Evaluator {
                 self.expr_cache.insert(cache_key.clone(), arc_expr.clone());
                 arc_expr
             };
-            
+
             // 评估表达式
             match expr.eval_with_context(&self.context) {
                 Ok(result) => {
                     // 缓存结果
                     self.result_cache.insert(cache_key, result);
                     Ok(result)
-                },
+                }
                 Err(e) => bail!("Evaluation error: {}", e),
             }
         } else {

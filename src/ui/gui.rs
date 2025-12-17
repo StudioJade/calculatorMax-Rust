@@ -3,8 +3,8 @@
 use anyhow::Result;
 use eframe::egui;
 
+use crate::calculator::mods::{Mod, ModCalc, ModDesc, ModVar};
 use crate::calculator::{Evaluator, HistoryManager};
-use crate::calculator::mods::{Mod, ModDesc, ModVar, ModCalc};
 use crate::config::Settings;
 use crate::i18n::translations::{Language, Translations};
 
@@ -68,10 +68,7 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
             .unwrap_or_default();
 
         // Add common Chinese system fonts at the beginning
-        let chinese_fonts = [
-            "Microsoft YaHei",
-            "SimHei",
-        ];
+        let chinese_fonts = ["Microsoft YaHei", "SimHei"];
 
         for font in chinese_fonts.iter() {
             font_family.insert(0, font.to_string());
@@ -424,46 +421,46 @@ impl eframe::App for CalculatorApp {
             if self.show_mod_creator {
                 ui.separator();
                 ui.heading(self.translations.get("create_mod_heading", self.language));
-                
+
                 // Show success message if any
                 if !self.mod_creator.success_message.is_empty() {
                     ui.colored_label(egui::Color32::GREEN, &self.mod_creator.success_message);
                 }
-                
+
                 // Show error message if any
                 if !self.mod_creator.error_message.is_empty() {
                     ui.colored_label(egui::Color32::RED, &self.mod_creator.error_message);
                 }
-                
+
                 ui.horizontal(|ui| {
                     ui.label(self.translations.get("mod_name", self.language));
                     ui.text_edit_singleline(&mut self.mod_creator.name);
                 });
-                
+
                 ui.horizontal(|ui| {
                     ui.label(self.translations.get("mod_description", self.language));
                     ui.text_edit_singleline(&mut self.mod_creator.description);
                 });
-                
+
                 ui.horizontal(|ui| {
                     ui.label(self.translations.get("mod_required_vars", self.language));
                     ui.text_edit_singleline(&mut self.mod_creator.required_vars);
                 });
-                
+
                 ui.horizontal(|ui| {
                     ui.label(self.translations.get("mod_expression", self.language));
                     ui.text_edit_singleline(&mut self.mod_creator.expression);
                 });
-                
+
                 ui.horizontal(|ui| {
                     ui.label(self.translations.get("mod_filename", self.language));
                     ui.text_edit_singleline(&mut self.mod_creator.filename);
                 });
-                
+
                 if ui.button(self.translations.get("save_mod", self.language)).clicked() {
                     self.save_mod();
                 }
-                
+
                 if ui.button(self.translations.get("cancel", self.language)).clicked() {
                     self.show_mod_creator = false;
                     self.mod_creator = ModCreator::default();

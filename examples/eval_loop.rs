@@ -83,5 +83,6 @@ fn main() {
     for e in exprs.iter() {
         total += bench_evaluator_parse_and_eval(&mut ev, e, iterations);
         total += bench_parse_then_eval_with_context(e, iterations, &ctx);
-    }    println!("total checksum={}", total);
+    }
+    println!("total checksum={}", total);
 }
