@@ -1,4 +1,5 @@
-[![CI](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml)  
+[![CI](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioJade/calculatorMax-Rust/actions/workflows/ci.yml) ![GitHub Issues](https://img.shields.io/github/issues/StudioJade/calculatorMax-Rust) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/StudioJade/calculatorMax-Rust/total) ![Platfroms](https://img.shields.io/badge/Support-Windows-00A4EF) ![Platfroms](https://img.shields.io/badge/Support-MacOS-007AFF?logo=macos) ![Platfroms](https://img.shields.io/badge/Support-Linux-CC0000?logo=linux)
+
 # 计算器 Max - Rust 版本
 
 一个功能强大的计算器应用程序，使用 Rust 编写，具有图形用户界面和广泛的数学功能。
