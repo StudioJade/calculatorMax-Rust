@@ -1,8 +1,0 @@
-[desc]
-name = "multiply"
-
-[var]
-needvars = ["x", "y"]
-
-[calc]
-howto = "x * y"

@@ -1,0 +1,10 @@
+[a.b.c]
+name = "test_func"
+type = "fun"
+needs = ["x", "y"]
+method = "x * y + 10"
+
+[b.c.d]
+name = "test_num"
+type = "num"
+res = 1.0

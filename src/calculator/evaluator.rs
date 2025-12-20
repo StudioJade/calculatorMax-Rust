@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::math_functions::*;
-use super::mods::ModManager;
+use super::mods::{Mod, ModManager};
 use super::random::*;
 
 /// Evaluates mathematical expressions
@@ -116,6 +116,21 @@ impl Evaluator {
     /// Get required variables for a mod
     pub fn get_required_vars(&self, name: &str) -> Option<Vec<String>> {
         self.mod_manager.get_required_vars(name)
+    }
+    
+    /// Get warnings from mod loading
+    pub fn get_warnings(&self) -> &[String] {
+        self.mod_manager.get_warnings()
+    }
+    
+    /// Clear warnings
+    pub fn clear_warnings(&mut self) {
+        self.mod_manager.clear_warnings();
+    }
+    
+    /// Get a mod by name
+    pub fn get_mod(&self, name: &str) -> Option<&Mod> {
+        self.mod_manager.get_mod(name)
     }
 
     /// Evaluates a mathematical expression
