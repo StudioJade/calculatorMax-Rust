@@ -1,10 +1,12 @@
 //! Translations for different languages
 
 use std::collections::HashMap;
+use sys_locale::get_locale;
 
 /// Supported languages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Language {
+    Auto, // Automatically detect system language
     SimplifiedChinese,
     TraditionalChineseTW,
     TraditionalChineseHK,
@@ -17,6 +19,7 @@ impl Language {
     /// Get the language code
     pub fn code(&self) -> &'static str {
         match self {
+            Language::Auto => "auto",
             Language::SimplifiedChinese => "zh-CN",
             Language::TraditionalChineseTW => "zh-TW",
             Language::TraditionalChineseHK => "zh-HK",
@@ -26,9 +29,26 @@ impl Language {
         }
     }
 
+    /// Detect system language
+    pub fn detect_system_language() -> Language {
+        let locale = get_locale().unwrap_or_else(|| "en".to_string());
+        
+        match locale.as_str() {
+            "zh-CN" | "zh-SG" | "zh" => Language::SimplifiedChinese,
+            "zh-TW" | "zh-HK" | "zh-MO" => Language::TraditionalChineseTW,
+            "ru" | "ru-RU" => Language::Russian,
+            // Add more language mappings as needed
+            _ => {
+                // Default to English for unsupported languages
+                Language::English
+            }
+        }
+    }
+
     /// Get the display name of the language (fixed, not localized)
     pub fn display_name(&self) -> &'static str {
         match self {
+            Language::Auto => "Auto",
             Language::SimplifiedChinese => "简体中文",
             Language::TraditionalChineseTW => "繁体中文",
             Language::TraditionalChineseHK => "繁体中文",
@@ -41,6 +61,7 @@ impl Language {
     /// Get all supported languages
     pub fn all() -> Vec<Language> {
         vec![
+            Language::Auto,
             Language::SimplifiedChinese,
             Language::TraditionalChineseTW,
             Language::TraditionalChineseHK,

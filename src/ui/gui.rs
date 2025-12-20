@@ -155,6 +155,9 @@ struct ModCreator {
 
 impl Default for CalculatorApp {
     fn default() -> Self {
+        // Detect system language, default to English if detection fails
+        let detected_language = Language::detect_system_language();
+        
         Self {
             expression: String::new(),
             result: String::new(),
@@ -166,7 +169,7 @@ impl Default for CalculatorApp {
             memory: 0.0,
             show_settings: false,
             history_filename: String::new(),
-            language: Language::English, // Default to English
+            language: detected_language,
             translations: Translations::default(),
             show_mod_creator: false,
             mod_creator: ModCreator::default(),
@@ -312,7 +315,12 @@ impl CalculatorApp {
 impl eframe::App for CalculatorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(self.translations.get("app_title", self.language));
+            let display_language = if self.language == Language::Auto { 
+                Language::detect_system_language()
+            } else { 
+                self.language 
+            };
+            ui.heading(self.translations.get("app_title", display_language));
 
             // Show error if any
             if !self.error.is_empty() {
@@ -321,22 +329,22 @@ impl eframe::App for CalculatorApp {
 
             // Input field
             ui.horizontal(|ui| {
-                ui.label(self.translations.get("expression", self.language));
+                ui.label(self.translations.get("expression", display_language));
                 ui.text_edit_singleline(&mut self.expression);
-                if ui.button(self.translations.get("calculate", self.language)).clicked() {
+                if ui.button(self.translations.get("calculate", display_language)).clicked() {
                     self.calculate();
                 }
             });
 
             // Result display
             ui.horizontal(|ui| {
-                ui.label(self.translations.get("result", self.language));
+                ui.label(self.translations.get("result", display_language));
                 ui.label(&self.result);
             });
 
             // Memory display
             ui.horizontal(|ui| {
-                ui.label(self.translations.get("memory", self.language));
+                ui.label(self.translations.get("memory", display_language));
                 ui.label(self.memory.to_string());
             });
 
@@ -344,10 +352,19 @@ impl eframe::App for CalculatorApp {
             ui.horizontal(|ui| {
                 ui.label("Language:");
                 egui::ComboBox::from_label("Language")
-                    .selected_text(self.language.code())
+                    .selected_text(if self.language == Language::Auto { 
+                        format!("Auto ({})", Language::detect_system_language().display_name())
+                    } else { 
+                        self.language.code().to_string() 
+                    })
                     .show_ui(ui, |ui| {
                         for lang in Language::all() {
-                            ui.selectable_value(&mut self.language, lang, lang.code());
+                            let display_text = if lang == Language::Auto { 
+                                format!("Auto ({})", Language::detect_system_language().display_name())
+                            } else { 
+                                lang.code().to_string() 
+                            };
+                            ui.selectable_value(&mut self.language, lang, display_text);
                         }
                     });
             });
@@ -356,26 +373,26 @@ impl eframe::App for CalculatorApp {
             ui.separator();
 
             ui.horizontal_wrapped(|ui| {
-                if ui.button(self.translations.get("history", self.language)).clicked() {
+                if ui.button(self.translations.get("history", display_language)).clicked() {
                     self.show_history = !self.show_history;
                 }
 
                 if ui
-                    .button(self.translations.get("clear_history", self.language))
+                    .button(self.translations.get("clear_history", display_language))
                     .clicked()
                 {
                     self.clear_history();
                 }
 
-                if ui.button(self.translations.get("settings", self.language)).clicked() {
+                if ui.button(self.translations.get("settings", display_language)).clicked() {
                     self.show_settings = !self.show_settings;
                 }
 
-                if ui.button(self.translations.get("exit", self.language)).clicked() {
+                if ui.button(self.translations.get("exit", display_language)).clicked() {
                     std::process::exit(0);
                 }
 
-                if ui.button(self.translations.get("create_mod", self.language)).clicked() {
+                if ui.button(self.translations.get("create_mod", display_language)).clicked() {
                     self.show_mod_creator = !self.show_mod_creator;
                 }
             });
@@ -383,12 +400,12 @@ impl eframe::App for CalculatorApp {
             // Show settings if requested
             if self.show_settings {
                 ui.separator();
-                ui.heading(self.translations.get("settings_heading", self.language));
+                ui.heading(self.translations.get("settings_heading", display_language));
                 ui.horizontal(|ui| {
                     if ui
                         .checkbox(
                             &mut self.settings.safe_mode,
-                            self.translations.get("safe_mode", self.language),
+                            self.translations.get("safe_mode", display_language),
                         )
                         .changed()
                     {
@@ -401,15 +418,15 @@ impl eframe::App for CalculatorApp {
             // Show history if requested
             if self.show_history {
                 ui.separator();
-                ui.heading(self.translations.get("history_heading", self.language));
+                ui.heading(self.translations.get("history_heading", display_language));
                 ui.label(self.history.to_string());
 
                 // Add option to save history to file
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("filename", self.language));
+                    ui.label(self.translations.get("filename", display_language));
                     ui.text_edit_singleline(&mut self.history_filename);
                     if ui
-                        .button(self.translations.get("save_history", self.language))
+                        .button(self.translations.get("save_history", display_language))
                         .clicked()
                     {
                         self.save_history();
@@ -420,7 +437,7 @@ impl eframe::App for CalculatorApp {
             // Show mod creator if requested
             if self.show_mod_creator {
                 ui.separator();
-                ui.heading(self.translations.get("create_mod_heading", self.language));
+                ui.heading(self.translations.get("create_mod_heading", display_language));
 
                 // Show success message if any
                 if !self.mod_creator.success_message.is_empty() {
@@ -433,35 +450,35 @@ impl eframe::App for CalculatorApp {
                 }
 
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_name", self.language));
+                    ui.label(self.translations.get("mod_name", display_language));
                     ui.text_edit_singleline(&mut self.mod_creator.name);
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_description", self.language));
+                    ui.label(self.translations.get("mod_description", display_language));
                     ui.text_edit_singleline(&mut self.mod_creator.description);
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_required_vars", self.language));
+                    ui.label(self.translations.get("mod_required_vars", display_language));
                     ui.text_edit_singleline(&mut self.mod_creator.required_vars);
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_expression", self.language));
+                    ui.label(self.translations.get("mod_expression", display_language));
                     ui.text_edit_singleline(&mut self.mod_creator.expression);
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_filename", self.language));
+                    ui.label(self.translations.get("mod_filename", display_language));
                     ui.text_edit_singleline(&mut self.mod_creator.filename);
                 });
 
-                if ui.button(self.translations.get("save_mod", self.language)).clicked() {
+                if ui.button(self.translations.get("save_mod", display_language)).clicked() {
                     self.save_mod();
                 }
 
-                if ui.button(self.translations.get("cancel", self.language)).clicked() {
+                if ui.button(self.translations.get("cancel", display_language)).clicked() {
                     self.show_mod_creator = false;
                     self.mod_creator = ModCreator::default();
                 }

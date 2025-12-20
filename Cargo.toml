@@ -26,6 +26,9 @@ toml = "0.8"
 anyhow = "1.0"
 thiserror = "1.0"
 
+# System locale detection
+sys-locale = "0.3"
+
 [features]
 # Keep GUI enabled by default for normal builds; disable with --no-default-features for a faster dev build
 default = ["gui", "embedded-fonts"]
