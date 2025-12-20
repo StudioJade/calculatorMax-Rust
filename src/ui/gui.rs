@@ -414,6 +414,12 @@ impl eframe::App for CalculatorApp {
             }
         }
         
+        // Check for global Enter key press for calculation
+        if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+            self.calculate();
+            ctx.request_repaint();
+        }
+        
         egui::CentralPanel::default().show(ctx, |ui| {
             let display_language = if self.language == Language::Auto { 
                 Language::detect_system_language()
@@ -439,44 +445,51 @@ impl eframe::App for CalculatorApp {
                     self.generate_suggestions();
                 }
                 
-                // Handle Tab key completion globally (outside of text edit focus)
-                // This ensures we catch the Tab key before it's consumed by the text edit
-                if response.has_focus() && !self.suggestions.is_empty() {
-                    // Check for Tab key press in the global input
-                    if ui.input(|i| i.key_pressed(egui::Key::Tab)) {
-                        // Apply selected suggestion
-                        if self.selected_suggestion < self.suggestions.len() {
-                            let suggestion = self.suggestions[self.selected_suggestion].clone();
-                            if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
-                                self.expression = self.expression[..=last_space].to_string() + &suggestion;
-                            } else {
-                                self.expression = suggestion;
-                            }
-                            
-                            // Clear suggestions
-                            self.suggestions.clear();
-                            self.selected_suggestion = 0;
-                            
-                            // Request focus removal to prevent further processing
-                            response.surrender_focus();
-                        }
+                // Handle keyboard events when text edit has focus
+                if response.has_focus() {
+                    // Check for Enter key press to calculate
+                    if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        self.calculate();
                     }
                     
-                    // Handle arrow keys for navigation
-                    if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
-                        self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
-                    }
-                    if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
-                        self.selected_suggestion = if self.selected_suggestion > 0 {
-                            self.selected_suggestion - 1
-                        } else {
-                            self.suggestions.len() - 1
-                        };
-                    }
-                    if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                        // Clear suggestions when pressing Escape
-                        self.suggestions.clear();
-                        self.selected_suggestion = 0;
+                    // Handle Tab key completion when there are suggestions
+                    if !self.suggestions.is_empty() {
+                        // Check for Tab key press in the global input
+                        if ui.input(|i| i.key_pressed(egui::Key::Tab)) {
+                            // Apply selected suggestion
+                            if self.selected_suggestion < self.suggestions.len() {
+                                let suggestion = self.suggestions[self.selected_suggestion].clone();
+                                if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                                    self.expression = self.expression[..=last_space].to_string() + &suggestion;
+                                } else {
+                                    self.expression = suggestion;
+                                }
+                                
+                                // Clear suggestions
+                                self.suggestions.clear();
+                                self.selected_suggestion = 0;
+                                
+                                // Request focus removal to prevent further processing
+                                response.surrender_focus();
+                            }
+                        }
+                        
+                        // Handle arrow keys for navigation
+                        if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                            self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
+                        }
+                        if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                            self.selected_suggestion = if self.selected_suggestion > 0 {
+                                self.selected_suggestion - 1
+                            } else {
+                                self.suggestions.len() - 1
+                            };
+                        }
+                        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                            // Clear suggestions when pressing Escape
+                            self.suggestions.clear();
+                            self.selected_suggestion = 0;
+                        }
                     }
                 }
                 
