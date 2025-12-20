@@ -108,6 +108,16 @@ impl Evaluator {
         self.mod_manager.reload_mods()
     }
 
+    /// List all available mods
+    pub fn list_mods(&self) -> Vec<String> {
+        self.mod_manager.list_mods()
+    }
+
+    /// Get required variables for a mod
+    pub fn get_required_vars(&self, name: &str) -> Option<Vec<String>> {
+        self.mod_manager.get_required_vars(name)
+    }
+
     /// Evaluates a mathematical expression
     pub fn evaluate(&mut self, expression: &str) -> Result<f64> {
         // Check if expression is a mod function call (name(args))

@@ -126,6 +126,12 @@ struct CalculatorApp {
 
     /// Mod creator state
     mod_creator: ModCreator,
+
+    /// Suggestions for the current input
+    suggestions: Vec<String>,
+
+    /// Selected suggestion index
+    selected_suggestion: usize,
 }
 
 /// State for the mod creator UI
@@ -173,6 +179,8 @@ impl Default for CalculatorApp {
             translations: Translations::default(),
             show_mod_creator: false,
             mod_creator: ModCreator::default(),
+            suggestions: Vec::new(),
+            selected_suggestion: 0,
         }
     }
 }
@@ -192,6 +200,78 @@ impl Default for ModCreator {
 }
 
 impl CalculatorApp {
+    /// Generates suggestions based on current input
+    fn generate_suggestions(&mut self) {
+        // Clear previous suggestions
+        self.suggestions.clear();
+        self.selected_suggestion = 0;
+        
+        // If expression is empty, show common functions
+        if self.expression.is_empty() {
+            self.suggestions.extend([
+                "sin()".to_string(),
+                "cos()".to_string(),
+                "tan()".to_string(),
+                "sqrt()".to_string(),
+                "log()".to_string(),
+                "exp()".to_string(),
+                "pi".to_string(),
+                "e".to_string(),
+            ]);
+            return;
+        }
+        
+        // Get the last token (word or partial word)
+        let tokens: Vec<&str> = self.expression.split(|c: char| !c.is_alphabetic()).collect();
+        if let Some(last_token) = tokens.last() {
+            if !last_token.is_empty() {
+                // Suggest built-in functions
+                let builtin_functions = [
+                    "sin", "cos", "tan", "asin", "acos", "atan",
+                    "sinh", "cosh", "tanh",
+                    "exp", "sqrt", "log", "log10", "log2",
+                    "ceil", "floor", "trunc", "fabs",
+                    "factorial", "gamma", "erf", "erfc",
+                    "degrees", "radians",
+                    "s_circle", "s_tri", "s_rect"
+                ];
+                
+                // Filter functions that start with the last token
+                for func in builtin_functions.iter() {
+                    if func.starts_with(last_token) {
+                        // Add opening parenthesis for functions
+                        self.suggestions.push(format!("{}()", func));
+                    }
+                }
+                
+                // Suggest constants
+                let constants = ["pi", "e"];
+                for constant in constants.iter() {
+                    if constant.starts_with(last_token) {
+                        self.suggestions.push(constant.to_string());
+                    }
+                }
+                
+                // Suggest custom mods
+                let mod_list = self.evaluator.list_mods();
+                for mod_name in mod_list {
+                    if mod_name.starts_with(last_token) {
+                        // Get required variables for this mod
+                        if let Some(vars) = self.evaluator.get_required_vars(&mod_name) {
+                            let args = vars.join(", ");
+                            self.suggestions.push(format!("{}({})", mod_name, args));
+                        } else {
+                            self.suggestions.push(format!("{}()", mod_name));
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Limit suggestions to 10 items
+        self.suggestions.truncate(10);
+    }
+    
     /// Processes the current expression
     fn calculate(&mut self) {
         // Clear previous error
@@ -314,6 +394,26 @@ impl CalculatorApp {
 
 impl eframe::App for CalculatorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Check for global Tab key press for suggestion completion
+        if !self.suggestions.is_empty() && ctx.input(|i| i.key_pressed(egui::Key::Tab)) {
+            // Apply selected suggestion
+            if self.selected_suggestion < self.suggestions.len() {
+                let suggestion = self.suggestions[self.selected_suggestion].clone();
+                if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                    self.expression = self.expression[..=last_space].to_string() + &suggestion;
+                } else {
+                    self.expression = suggestion;
+                }
+                
+                // Clear suggestions
+                self.suggestions.clear();
+                self.selected_suggestion = 0;
+                
+                // Request repaint to update UI
+                ctx.request_repaint();
+            }
+        }
+        
         egui::CentralPanel::default().show(ctx, |ui| {
             let display_language = if self.language == Language::Auto { 
                 Language::detect_system_language()
@@ -327,14 +427,100 @@ impl eframe::App for CalculatorApp {
                 ui.colored_label(egui::Color32::RED, &self.error);
             }
 
-            // Input field
+            // Input field with suggestions
             ui.horizontal(|ui| {
                 ui.label(self.translations.get("expression", display_language));
-                ui.text_edit_singleline(&mut self.expression);
+                
+                // Create a text edit widget
+                let response = ui.text_edit_singleline(&mut self.expression);
+                
+                // Generate suggestions when the text changes
+                if response.changed() {
+                    self.generate_suggestions();
+                }
+                
+                // Handle Tab key completion globally (outside of text edit focus)
+                // This ensures we catch the Tab key before it's consumed by the text edit
+                if response.has_focus() && !self.suggestions.is_empty() {
+                    // Check for Tab key press in the global input
+                    if ui.input(|i| i.key_pressed(egui::Key::Tab)) {
+                        // Apply selected suggestion
+                        if self.selected_suggestion < self.suggestions.len() {
+                            let suggestion = self.suggestions[self.selected_suggestion].clone();
+                            if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                                self.expression = self.expression[..=last_space].to_string() + &suggestion;
+                            } else {
+                                self.expression = suggestion;
+                            }
+                            
+                            // Clear suggestions
+                            self.suggestions.clear();
+                            self.selected_suggestion = 0;
+                            
+                            // Request focus removal to prevent further processing
+                            response.surrender_focus();
+                        }
+                    }
+                    
+                    // Handle arrow keys for navigation
+                    if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                        self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
+                    }
+                    if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                        self.selected_suggestion = if self.selected_suggestion > 0 {
+                            self.selected_suggestion - 1
+                        } else {
+                            self.suggestions.len() - 1
+                        };
+                    }
+                    if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                        // Clear suggestions when pressing Escape
+                        self.suggestions.clear();
+                        self.selected_suggestion = 0;
+                    }
+                }
+                
                 if ui.button(self.translations.get("calculate", display_language)).clicked() {
                     self.calculate();
                 }
             });
+            
+            // Display suggestions if any
+            if !self.suggestions.is_empty() {
+                ui.vertical(|ui| {
+                    let mut clicked_index: Option<usize> = None;
+                    for (i, suggestion) in self.suggestions.iter().enumerate() {
+                        let response = ui.button(suggestion);
+                        if i == self.selected_suggestion {
+                            // Highlight selected suggestion
+                            ui.painter().rect_filled(
+                                response.rect,
+                                egui::Rounding::same(2.0),
+                                egui::Color32::from_rgba_premultiplied(0, 120, 255, 30)
+                            );
+                        }
+                        if response.clicked() {
+                            clicked_index = Some(i);
+                        }
+                    }
+                    
+                    // Apply clicked suggestion outside the loop to avoid borrowing issues
+                    if let Some(index) = clicked_index {
+                        if index < self.suggestions.len() {
+                            let suggestion = &self.suggestions[index];
+                            if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                                self.expression = self.expression[..=last_space].to_string() + suggestion;
+                            } else {
+                                self.expression = suggestion.clone();
+                            }
+                            
+                            // Clear suggestions
+                            self.suggestions.clear();
+                            self.selected_suggestion = 0;
+                        }
+                    }
+                });
+            }
 
             // Result display
             ui.horizontal(|ui| {
