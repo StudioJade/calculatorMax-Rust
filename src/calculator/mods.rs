@@ -170,7 +170,7 @@ impl ModManager {
     fn load_mods_from_dir(&mut self) -> Result<(), anyhow::Error> {
         // Clear previous warnings
         self.warnings.clear();
-        
+
         let mods_dir = Path::new("mods");
 
         // If mods directory doesn't exist, just return without error
@@ -193,11 +193,11 @@ impl ModManager {
                     // Check if this is the new format ([x.x.x] table headers)
                     if content.contains("[") && content.contains("=") && !content.contains("[desc]") {
                         // This looks like the new simplified format with table structure
-                        
+
                         // Split content into sections by table headers
                         let mut sections: Vec<String> = Vec::new();
                         let mut current_section = String::new();
-                        
+
                         for line in content.lines() {
                             if line.starts_with('[') && !current_section.is_empty() {
                                 // New section started, save the previous one
@@ -207,31 +207,32 @@ impl ModManager {
                             current_section.push_str(line);
                             current_section.push('\n');
                         }
-                        
+
                         // Don't forget the last section
                         if !current_section.is_empty() {
                             sections.push(current_section);
                         }
-                        
+
                         // Parse each section individually
                         for section in sections {
                             if section.trim().is_empty() {
                                 continue;
                             }
-                            
+
                             // Extract mod ID from the first line which should be [mod.id]
                             if let Some(first_line) = section.lines().next() {
                                 if first_line.starts_with('[') && first_line.ends_with(']') {
-                                    let mod_id = first_line[1..first_line.len()-1].to_string();
-                                    
+                                    let mod_id = first_line[1..first_line.len() - 1].to_string();
+
                                     // Remove the first line (table header) and parse the rest as SimplifiedMod
                                     let content_without_header = section.lines().skip(1).collect::<Vec<_>>().join("\n");
-                                    
+
                                     // Try to parse the content as a single SimplifiedMod
-                                    if let Ok(simplified_mod) = toml::from_str::<SimplifiedMod>(&content_without_header) {
+                                    if let Ok(simplified_mod) = toml::from_str::<SimplifiedMod>(&content_without_header)
+                                    {
                                         // Use mod_id as the mod name to preserve the full identifier
                                         let mod_name = mod_id.clone();
-                                        
+
                                         // Convert to legacy Mod structure for compatibility
                                         let legacy_mod = Mod {
                                             desc: ModDesc {
@@ -247,24 +248,31 @@ impl ModManager {
                                                 res: simplified_mod.res,
                                             },
                                         };
-                                        
+
                                         self.mods.insert(mod_name, legacy_mod);
                                     } else {
-                                        eprintln!("Warning: Failed to parse mod section in file {:?}: Invalid format", path);
+                                        eprintln!(
+                                            "Warning: Failed to parse mod section in file {:?}: Invalid format",
+                                            path
+                                        );
                                     }
                                 }
                             }
                         }
-                        
+
                         // Successfully parsed as simplified format, continue to next file
                         continue;
                     } else if content.contains("[desc]") {
                         // This is the old format, show warning and skip
-                        self.warnings.push(format!("Warning: Skipping old format mod file {:?}. Please convert to new format [x.x.x].", path));
+                        self.warnings.push(format!(
+                            "Warning: Skipping old format mod file {:?}. Please convert to new format [x.x.x].",
+                            path
+                        ));
                         continue;
                     } else {
                         // Unknown format, show warning and skip
-                        self.warnings.push(format!("Warning: Skipping unknown format mod file {:?}.", path));
+                        self.warnings
+                            .push(format!("Warning: Skipping unknown format mod file {:?}.", path));
                         continue;
                     }
                 }
@@ -306,7 +314,7 @@ impl ModManager {
     pub fn get_warnings(&self) -> &[String] {
         &self.warnings
     }
-    
+
     /// Clear warnings
     pub fn clear_warnings(&mut self) {
         self.warnings.clear();

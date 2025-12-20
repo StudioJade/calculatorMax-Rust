@@ -8,7 +8,7 @@ fn main() {
         println!("Successfully loaded mods");
         let mod_list = mod_manager.list_mods();
         println!("Available mods: {:?}", mod_list);
-        
+
         // Check if our new format mods are loaded
         if mod_list.contains(&"a.b.c".to_string()) {
             println!("Found a.b.c mod");
@@ -18,7 +18,7 @@ fn main() {
         } else {
             println!("a.b.c mod not found");
         }
-        
+
         if mod_list.contains(&"b.c.d".to_string()) {
             println!("Found b.c.d mod");
             if let Some(vars) = mod_manager.get_required_vars("b.c.d") {

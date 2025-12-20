@@ -1,4 +1,4 @@
-use calculator_max::calculator::mods::{SimplifiedMod, Mod};
+use calculator_max::calculator::mods::{Mod, SimplifiedMod};
 
 fn main() {
     let content = r#"[a.b.c]
@@ -11,7 +11,7 @@ method = "x * y + 10"
     // Remove the first line (table header) and parse the rest as SimplifiedMod
     let content_without_header = content.lines().skip(1).collect::<Vec<_>>().join("\n");
     println!("Content to parse: {}", content_without_header);
-    
+
     match toml::from_str::<SimplifiedMod>(&content_without_header) {
         Ok(simplified_mod) => {
             println!("Successfully parsed:");

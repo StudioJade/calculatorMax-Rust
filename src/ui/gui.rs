@@ -182,7 +182,7 @@ impl Default for CalculatorApp {
         // Create evaluator and get warnings
         let evaluator = Evaluator::default();
         let warnings: Vec<String> = evaluator.get_warnings().to_vec();
-        
+
         Self {
             expression: String::new(),
             result: String::new(),
@@ -315,29 +315,29 @@ impl CalculatorApp {
         // Limit suggestions to 10 items
         self.suggestions.truncate(10);
     }
-    
-    /// Get the display name for a language in the current display language
-    fn get_language_display_name(&self, language: Language, display_language: Language) -> String {
+
+    /// Get the display name for a language in its own language
+    fn get_language_display_name(&self, language: Language, _display_language: Language) -> String {
         match language {
             Language::Auto => {
                 let auto_lang = Language::detect_system_language();
                 let auto_lang_name = match auto_lang {
-                    Language::SimplifiedChinese => self.translations.get("language_chinese_simplified", display_language),
-                    Language::TraditionalChineseTW => self.translations.get("language_chinese_traditional_tw", display_language),
-                    Language::TraditionalChineseHK => self.translations.get("language_chinese_traditional_hk", display_language),
-                    Language::English => self.translations.get("language_english", display_language),
-                    Language::Russian => self.translations.get("language_russian", display_language),
-                    Language::Cat => self.translations.get("language_cat", display_language),
-                    _ => self.translations.get("language_unknown", display_language),
+                    Language::SimplifiedChinese => "简体中文".to_string(),
+                    Language::TraditionalChineseTW => "繁體中文（台灣）".to_string(),
+                    Language::TraditionalChineseHK => "繁體中文（香港）".to_string(),
+                    Language::English => "English".to_string(),
+                    Language::Russian => "Русский".to_string(),
+                    Language::Cat => "喵语".to_string(),
+                    _ => "Unknown".to_string(),
                 };
-                format!("{} ({})", self.translations.get("language_auto", display_language), auto_lang_name)
-            },
-            Language::SimplifiedChinese => self.translations.get("language_chinese_simplified", display_language),
-            Language::TraditionalChineseTW => self.translations.get("language_chinese_traditional_tw", display_language),
-            Language::TraditionalChineseHK => self.translations.get("language_chinese_traditional_hk", display_language),
-            Language::English => self.translations.get("language_english", display_language),
-            Language::Russian => self.translations.get("language_russian", display_language),
-            Language::Cat => self.translations.get("language_cat", display_language),
+                format!("自动 ({})", auto_lang_name)
+            }
+            Language::SimplifiedChinese => "简体中文".to_string(),
+            Language::TraditionalChineseTW => "繁體中文（台灣）".to_string(),
+            Language::TraditionalChineseHK => "繁體中文（香港）".to_string(),
+            Language::English => "English".to_string(),
+            Language::Russian => "Русский".to_string(),
+            Language::Cat => "喵语".to_string(),
         }
     }
 
@@ -428,26 +428,31 @@ impl CalculatorApp {
         }
 
         // Parse required variables for function mods
-        let required_vars: Vec<String> = if self.mod_creator.mod_type == "fun" && !self.mod_creator.required_vars.is_empty() {
-            self.mod_creator
-                .required_vars
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect()
-        } else {
-            Vec::new()
-        };
+        let required_vars: Vec<String> =
+            if self.mod_creator.mod_type == "fun" && !self.mod_creator.required_vars.is_empty() {
+                self.mod_creator
+                    .required_vars
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            } else {
+                Vec::new()
+            };
 
         // Create simplified mod structure
         let mut mods_map = std::collections::HashMap::new();
-        
+
         let mod_id = self.mod_creator.mod_id.clone();
-        
+
         let simplified_mod = if self.mod_creator.mod_type == "fun" {
             SimplifiedMod {
                 name: Some(self.mod_creator.name.clone()),
-                needs: if required_vars.is_empty() { None } else { Some(required_vars) },
+                needs: if required_vars.is_empty() {
+                    None
+                } else {
+                    Some(required_vars)
+                },
                 method: if self.mod_creator.expression.is_empty() {
                     None
                 } else {
@@ -465,18 +470,18 @@ impl CalculatorApp {
                     return;
                 }
             };
-            
+
             SimplifiedMod {
                 name: Some(self.mod_creator.name.clone()),
-                needs: None, // Constants don't need variables
+                needs: None,  // Constants don't need variables
                 method: None, // Constants don't have methods
                 res: Some(constant_value),
                 mod_type: Some("num".to_string()),
             }
         };
-        
+
         mods_map.insert(mod_id, simplified_mod);
-        
+
         // Serialize to TOML manually to match the desired format
         let mut toml_content = String::new();
         for (mod_id, mod_def) in mods_map {
@@ -571,7 +576,7 @@ impl eframe::App for CalculatorApp {
             if !self.error.is_empty() {
                 ui.colored_label(egui::Color32::RED, &self.error);
             }
-            
+
             // Show warnings if any
             for warning in &self.warnings {
                 ui.colored_label(egui::Color32::LIGHT_RED, warning);
@@ -690,7 +695,16 @@ impl eframe::App for CalculatorApp {
 
             // Memory display
             ui.horizontal(|ui| {
-                ui.label(self.translations.get("memory", display_language));
+                // Get the translated memory label and remove the (m) part if present, then add colon
+                let memory_label = self.translations.get("memory", display_language);
+                let display_label = if memory_label.ends_with(" (m):") {
+                    format!("{}:", &memory_label[..memory_label.len() - 5])
+                } else if memory_label.ends_with(" (m)") {
+                    format!("{}:", &memory_label[..memory_label.len() - 4])
+                } else {
+                    memory_label
+                };
+                ui.label(display_label);
                 ui.label(self.memory.to_string());
             });
 
@@ -819,12 +833,20 @@ impl eframe::App for CalculatorApp {
                     } else {
                         self.translations.get("mod_type_constant", display_language)
                     };
-                    
+
                     egui::ComboBox::from_id_source("mod_type")
                         .selected_text(selected_text)
                         .show_ui(ui, |ui: &mut egui::Ui| {
-                            ui.selectable_value(&mut self.mod_creator.mod_type, "fun".to_string(), self.translations.get("mod_type_function", display_language));
-                            ui.selectable_value(&mut self.mod_creator.mod_type, "num".to_string(), self.translations.get("mod_type_constant", display_language));
+                            ui.selectable_value(
+                                &mut self.mod_creator.mod_type,
+                                "fun".to_string(),
+                                self.translations.get("mod_type_function", display_language),
+                            );
+                            ui.selectable_value(
+                                &mut self.mod_creator.mod_type,
+                                "num".to_string(),
+                                self.translations.get("mod_type_constant", display_language),
+                            );
                         });
                 });
 
@@ -865,7 +887,7 @@ impl eframe::App for CalculatorApp {
             if self.show_mod_list {
                 ui.separator();
                 ui.heading(self.translations.get("loaded_mods", display_language));
-                
+
                 // Get list of mods
                 let mod_list = self.evaluator.list_mods();
                 if mod_list.is_empty() {
@@ -878,8 +900,16 @@ impl eframe::App for CalculatorApp {
                             if let Some(mod_def) = self.evaluator.get_mod(&mod_name) {
                                 let display_name = mod_def.desc.name.clone().unwrap_or_else(|| mod_name.clone());
                                 ui.horizontal(|ui| {
-                                    ui.label(format!("{}: {}", self.translations.get("mod_id_display", display_language), mod_name));
-                                    ui.label(format!("{}: {}", self.translations.get("mod_name_display", display_language), display_name));
+                                    ui.label(format!(
+                                        "{}: {}",
+                                        self.translations.get("mod_id_display", display_language),
+                                        mod_name
+                                    ));
+                                    ui.label(format!(
+                                        "{}: {}",
+                                        self.translations.get("mod_name_display", display_language),
+                                        display_name
+                                    ));
                                 });
                                 ui.separator();
                             }
