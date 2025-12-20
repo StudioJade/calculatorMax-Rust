@@ -32,7 +32,7 @@ impl Language {
     /// Detect system language
     pub fn detect_system_language() -> Language {
         let locale = get_locale().unwrap_or_else(|| "en".to_string());
-        
+
         match locale.as_str() {
             "zh-CN" | "zh-SG" | "zh" => Language::SimplifiedChinese,
             "zh-TW" | "zh-HK" | "zh-MO" => Language::TraditionalChineseTW,

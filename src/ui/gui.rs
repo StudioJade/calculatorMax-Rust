@@ -163,7 +163,7 @@ impl Default for CalculatorApp {
     fn default() -> Self {
         // Detect system language, default to English if detection fails
         let detected_language = Language::detect_system_language();
-        
+
         Self {
             expression: String::new(),
             result: String::new(),
@@ -205,7 +205,7 @@ impl CalculatorApp {
         // Clear previous suggestions
         self.suggestions.clear();
         self.selected_suggestion = 0;
-        
+
         // If expression is empty, show common functions
         if self.expression.is_empty() {
             self.suggestions.extend([
@@ -220,22 +220,42 @@ impl CalculatorApp {
             ]);
             return;
         }
-        
+
         // Get the last token (word or partial word)
         let tokens: Vec<&str> = self.expression.split(|c: char| !c.is_alphabetic()).collect();
         if let Some(last_token) = tokens.last() {
             if !last_token.is_empty() {
                 // Suggest built-in functions
                 let builtin_functions = [
-                    "sin", "cos", "tan", "asin", "acos", "atan",
-                    "sinh", "cosh", "tanh",
-                    "exp", "sqrt", "log", "log10", "log2",
-                    "ceil", "floor", "trunc", "fabs",
-                    "factorial", "gamma", "erf", "erfc",
-                    "degrees", "radians",
-                    "s_circle", "s_tri", "s_rect"
+                    "sin",
+                    "cos",
+                    "tan",
+                    "asin",
+                    "acos",
+                    "atan",
+                    "sinh",
+                    "cosh",
+                    "tanh",
+                    "exp",
+                    "sqrt",
+                    "log",
+                    "log10",
+                    "log2",
+                    "ceil",
+                    "floor",
+                    "trunc",
+                    "fabs",
+                    "factorial",
+                    "gamma",
+                    "erf",
+                    "erfc",
+                    "degrees",
+                    "radians",
+                    "s_circle",
+                    "s_tri",
+                    "s_rect",
                 ];
-                
+
                 // Filter functions that start with the last token
                 for func in builtin_functions.iter() {
                     if func.starts_with(last_token) {
@@ -243,7 +263,7 @@ impl CalculatorApp {
                         self.suggestions.push(format!("{}()", func));
                     }
                 }
-                
+
                 // Suggest constants
                 let constants = ["pi", "e"];
                 for constant in constants.iter() {
@@ -251,7 +271,7 @@ impl CalculatorApp {
                         self.suggestions.push(constant.to_string());
                     }
                 }
-                
+
                 // Suggest custom mods
                 let mod_list = self.evaluator.list_mods();
                 for mod_name in mod_list {
@@ -267,11 +287,11 @@ impl CalculatorApp {
                 }
             }
         }
-        
+
         // Limit suggestions to 10 items
         self.suggestions.truncate(10);
     }
-    
+
     /// Processes the current expression
     fn calculate(&mut self) {
         // Clear previous error
@@ -404,27 +424,27 @@ impl eframe::App for CalculatorApp {
                 } else {
                     self.expression = suggestion;
                 }
-                
+
                 // Clear suggestions
                 self.suggestions.clear();
                 self.selected_suggestion = 0;
-                
+
                 // Request repaint to update UI
                 ctx.request_repaint();
             }
         }
-        
+
         // Check for global Enter key press for calculation
         if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
             self.calculate();
             ctx.request_repaint();
         }
-        
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            let display_language = if self.language == Language::Auto { 
+            let display_language = if self.language == Language::Auto {
                 Language::detect_system_language()
-            } else { 
-                self.language 
+            } else {
+                self.language
             };
             ui.heading(self.translations.get("app_title", display_language));
 
@@ -436,22 +456,22 @@ impl eframe::App for CalculatorApp {
             // Input field with suggestions
             ui.horizontal(|ui| {
                 ui.label(self.translations.get("expression", display_language));
-                
+
                 // Create a text edit widget
                 let response = ui.text_edit_singleline(&mut self.expression);
-                
+
                 // Generate suggestions when the text changes
                 if response.changed() {
                     self.generate_suggestions();
                 }
-                
+
                 // Handle keyboard events when text edit has focus
                 if response.has_focus() {
                     // Check for Enter key press to calculate
                     if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         self.calculate();
                     }
-                    
+
                     // Handle Tab key completion when there are suggestions
                     if !self.suggestions.is_empty() {
                         // Check for Tab key press in the global input
@@ -464,16 +484,16 @@ impl eframe::App for CalculatorApp {
                                 } else {
                                     self.expression = suggestion;
                                 }
-                                
+
                                 // Clear suggestions
                                 self.suggestions.clear();
                                 self.selected_suggestion = 0;
-                                
+
                                 // Request focus removal to prevent further processing
                                 response.surrender_focus();
                             }
                         }
-                        
+
                         // Handle arrow keys for navigation
                         if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
                             self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
@@ -492,12 +512,15 @@ impl eframe::App for CalculatorApp {
                         }
                     }
                 }
-                
-                if ui.button(self.translations.get("calculate", display_language)).clicked() {
+
+                if ui
+                    .button(self.translations.get("calculate", display_language))
+                    .clicked()
+                {
                     self.calculate();
                 }
             });
-            
+
             // Display suggestions if any
             if !self.suggestions.is_empty() {
                 ui.vertical(|ui| {
@@ -509,14 +532,14 @@ impl eframe::App for CalculatorApp {
                             ui.painter().rect_filled(
                                 response.rect,
                                 egui::Rounding::same(2.0),
-                                egui::Color32::from_rgba_premultiplied(0, 120, 255, 30)
+                                egui::Color32::from_rgba_premultiplied(0, 120, 255, 30),
                             );
                         }
                         if response.clicked() {
                             clicked_index = Some(i);
                         }
                     }
-                    
+
                     // Apply clicked suggestion outside the loop to avoid borrowing issues
                     if let Some(index) = clicked_index {
                         if index < self.suggestions.len() {
@@ -526,7 +549,7 @@ impl eframe::App for CalculatorApp {
                             } else {
                                 self.expression = suggestion.clone();
                             }
-                            
+
                             // Clear suggestions
                             self.suggestions.clear();
                             self.selected_suggestion = 0;
@@ -551,17 +574,17 @@ impl eframe::App for CalculatorApp {
             ui.horizontal(|ui| {
                 ui.label("Language:");
                 egui::ComboBox::from_label("Language")
-                    .selected_text(if self.language == Language::Auto { 
+                    .selected_text(if self.language == Language::Auto {
                         format!("Auto ({})", Language::detect_system_language().display_name())
-                    } else { 
-                        self.language.code().to_string() 
+                    } else {
+                        self.language.code().to_string()
                     })
                     .show_ui(ui, |ui| {
                         for lang in Language::all() {
-                            let display_text = if lang == Language::Auto { 
+                            let display_text = if lang == Language::Auto {
                                 format!("Auto ({})", Language::detect_system_language().display_name())
-                            } else { 
-                                lang.code().to_string() 
+                            } else {
+                                lang.code().to_string()
                             };
                             ui.selectable_value(&mut self.language, lang, display_text);
                         }
@@ -591,7 +614,10 @@ impl eframe::App for CalculatorApp {
                     std::process::exit(0);
                 }
 
-                if ui.button(self.translations.get("create_mod", display_language)).clicked() {
+                if ui
+                    .button(self.translations.get("create_mod", display_language))
+                    .clicked()
+                {
                     self.show_mod_creator = !self.show_mod_creator;
                 }
             });
