@@ -570,356 +570,360 @@ impl eframe::App for CalculatorApp {
             } else {
                 self.language
             };
-            ui.heading(self.translations.get("app_title", display_language));
 
-            // Show error if any
-            if !self.error.is_empty() {
-                ui.colored_label(egui::Color32::RED, &self.error);
-            }
+            // Create a scrollable area for the main content
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.heading(self.translations.get("app_title", display_language));
 
-            // Show warnings if any
-            for warning in &self.warnings {
-                ui.colored_label(egui::Color32::LIGHT_RED, warning);
-            }
-
-            // Input field with suggestions
-            ui.horizontal(|ui| {
-                ui.label(self.translations.get("expression", display_language));
-
-                // Create a text edit widget
-                let response = ui.text_edit_singleline(&mut self.expression);
-
-                // Generate suggestions when the text changes
-                if response.changed() {
-                    self.generate_suggestions();
+                // Show error if any
+                if !self.error.is_empty() {
+                    ui.colored_label(egui::Color32::RED, &self.error);
                 }
 
-                // Handle keyboard events when text edit has focus
-                if response.has_focus() {
-                    // Check for Enter key press to calculate
-                    if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                        self.calculate();
+                // Show warnings if any
+                for warning in &self.warnings {
+                    ui.colored_label(egui::Color32::LIGHT_RED, warning);
+                }
+
+                // Input field with suggestions
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("expression", display_language));
+
+                    // Create a text edit widget
+                    let response = ui.text_edit_singleline(&mut self.expression);
+
+                    // Generate suggestions when the text changes
+                    if response.changed() {
+                        self.generate_suggestions();
                     }
 
-                    // Handle Tab key completion when there are suggestions
-                    if !self.suggestions.is_empty() {
-                        // Check for Tab key press in the global input
-                        if ui.input(|i| i.key_pressed(egui::Key::Tab)) {
-                            // Apply selected suggestion
-                            if self.selected_suggestion < self.suggestions.len() {
-                                let suggestion = self.suggestions[self.selected_suggestion].clone();
-                                if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
-                                    self.expression = self.expression[..=last_space].to_string() + &suggestion;
+                    // Handle keyboard events when text edit has focus
+                    if response.has_focus() {
+                        // Check for Enter key press to calculate
+                        if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            self.calculate();
+                        }
+
+                        // Handle Tab key completion when there are suggestions
+                        if !self.suggestions.is_empty() {
+                            // Check for Tab key press in the global input
+                            if ui.input(|i| i.key_pressed(egui::Key::Tab)) {
+                                // Apply selected suggestion
+                                if self.selected_suggestion < self.suggestions.len() {
+                                    let suggestion = self.suggestions[self.selected_suggestion].clone();
+                                    if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                                        self.expression = self.expression[..=last_space].to_string() + &suggestion;
+                                    } else {
+                                        self.expression = suggestion;
+                                    }
+
+                                    // Clear suggestions
+                                    self.suggestions.clear();
+                                    self.selected_suggestion = 0;
+
+                                    // Request focus removal to prevent further processing
+                                    response.surrender_focus();
+                                }
+                            }
+
+                            // Handle arrow keys for navigation
+                            if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                                self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
+                            }
+                            if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                                self.selected_suggestion = if self.selected_suggestion > 0 {
+                                    self.selected_suggestion - 1
                                 } else {
-                                    self.expression = suggestion;
+                                    self.suggestions.len() - 1
+                                };
+                            }
+                            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                                // Clear suggestions when pressing Escape
+                                self.suggestions.clear();
+                                self.selected_suggestion = 0;
+                            }
+                        }
+                    }
+
+                    if ui
+                        .button(self.translations.get("calculate", display_language))
+                        .clicked()
+                    {
+                        self.calculate();
+                    }
+                });
+
+                // Display suggestions if any
+                if !self.suggestions.is_empty() {
+                    ui.vertical(|ui| {
+                        let mut clicked_index: Option<usize> = None;
+                        for (i, suggestion) in self.suggestions.iter().enumerate() {
+                            let response = ui.button(suggestion);
+                            if i == self.selected_suggestion {
+                                // Highlight selected suggestion
+                                ui.painter().rect_filled(
+                                    response.rect,
+                                    egui::Rounding::same(2.0),
+                                    egui::Color32::from_rgba_premultiplied(0, 120, 255, 30),
+                                );
+                            }
+                            if response.clicked() {
+                                clicked_index = Some(i);
+                            }
+                        }
+
+                        // Apply clicked suggestion outside the loop to avoid borrowing issues
+                        if let Some(index) = clicked_index {
+                            if index < self.suggestions.len() {
+                                let suggestion = &self.suggestions[index];
+                                if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
+                                    self.expression = self.expression[..=last_space].to_string() + suggestion;
+                                } else {
+                                    self.expression = suggestion.clone();
                                 }
 
                                 // Clear suggestions
                                 self.suggestions.clear();
                                 self.selected_suggestion = 0;
-
-                                // Request focus removal to prevent further processing
-                                response.surrender_focus();
                             }
-                        }
-
-                        // Handle arrow keys for navigation
-                        if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
-                            self.selected_suggestion = (self.selected_suggestion + 1) % self.suggestions.len();
-                        }
-                        if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
-                            self.selected_suggestion = if self.selected_suggestion > 0 {
-                                self.selected_suggestion - 1
-                            } else {
-                                self.suggestions.len() - 1
-                            };
-                        }
-                        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                            // Clear suggestions when pressing Escape
-                            self.suggestions.clear();
-                            self.selected_suggestion = 0;
-                        }
-                    }
-                }
-
-                if ui
-                    .button(self.translations.get("calculate", display_language))
-                    .clicked()
-                {
-                    self.calculate();
-                }
-            });
-
-            // Display suggestions if any
-            if !self.suggestions.is_empty() {
-                ui.vertical(|ui| {
-                    let mut clicked_index: Option<usize> = None;
-                    for (i, suggestion) in self.suggestions.iter().enumerate() {
-                        let response = ui.button(suggestion);
-                        if i == self.selected_suggestion {
-                            // Highlight selected suggestion
-                            ui.painter().rect_filled(
-                                response.rect,
-                                egui::Rounding::same(2.0),
-                                egui::Color32::from_rgba_premultiplied(0, 120, 255, 30),
-                            );
-                        }
-                        if response.clicked() {
-                            clicked_index = Some(i);
-                        }
-                    }
-
-                    // Apply clicked suggestion outside the loop to avoid borrowing issues
-                    if let Some(index) = clicked_index {
-                        if index < self.suggestions.len() {
-                            let suggestion = &self.suggestions[index];
-                            if let Some(last_space) = self.expression.rfind(|c: char| !c.is_alphabetic()) {
-                                self.expression = self.expression[..=last_space].to_string() + suggestion;
-                            } else {
-                                self.expression = suggestion.clone();
-                            }
-
-                            // Clear suggestions
-                            self.suggestions.clear();
-                            self.selected_suggestion = 0;
-                        }
-                    }
-                });
-            }
-
-            // Result display
-            ui.horizontal(|ui| {
-                ui.label(self.translations.get("result", display_language));
-                ui.label(&self.result);
-            });
-
-            // Memory display
-            ui.horizontal(|ui| {
-                // Get the translated memory label and remove the (m) part if present, then add colon
-                let memory_label = self.translations.get("memory", display_language);
-                let display_label = if memory_label.ends_with(" (m):") {
-                    format!("{}:", &memory_label[..memory_label.len() - 5])
-                } else if memory_label.ends_with(" (m)") {
-                    format!("{}:", &memory_label[..memory_label.len() - 4])
-                } else {
-                    memory_label
-                };
-                ui.label(display_label);
-                ui.label(self.memory.to_string());
-            });
-
-            // Language selector
-            ui.horizontal(|ui| {
-                ui.label(self.translations.get("language_label", display_language));
-                egui::ComboBox::from_id_source("language_selector")
-                    .selected_text(self.get_language_display_name(self.language, display_language))
-                    .show_ui(ui, |ui| {
-                        for lang in Language::all() {
-                            let display_text = self.get_language_display_name(lang, display_language);
-                            ui.selectable_value(&mut self.language, lang, display_text);
                         }
                     });
-            });
-
-            // Controls
-            ui.separator();
-
-            ui.horizontal_wrapped(|ui| {
-                if ui.button(self.translations.get("history", display_language)).clicked() {
-                    self.show_history = !self.show_history;
                 }
 
-                if ui
-                    .button(self.translations.get("clear_history", display_language))
-                    .clicked()
-                {
-                    self.clear_history();
-                }
-
-                if ui.button(self.translations.get("settings", display_language)).clicked() {
-                    self.show_settings = !self.show_settings;
-                }
-
-                if ui
-                    .button(self.translations.get("show_mods", display_language))
-                    .clicked()
-                {
-                    self.show_mod_list = !self.show_mod_list;
-                }
-
-                if ui
-                    .button(self.translations.get("create_mod", display_language))
-                    .clicked()
-                {
-                    self.show_mod_creator = !self.show_mod_creator;
-                }
-
-                if ui.button(self.translations.get("exit", display_language)).clicked() {
-                    std::process::exit(0);
-                }
-            });
-
-            // Show settings if requested
-            if self.show_settings {
-                ui.separator();
-                ui.heading(self.translations.get("settings_heading", display_language));
+                // Result display
                 ui.horizontal(|ui| {
-                    if ui
-                        .checkbox(
-                            &mut self.settings.safe_mode,
-                            self.translations.get("safe_mode", display_language),
-                        )
-                        .changed()
-                    {
-                        self.evaluator.set_safe_mode(self.settings.safe_mode);
-                    }
-                    ui.label("(Uncheck for extended functionality)");
-                });
-            }
-
-            // Show history if requested
-            if self.show_history {
-                ui.separator();
-                ui.heading(self.translations.get("history_heading", display_language));
-                ui.label(self.history.to_string());
-
-                // Add option to save history to file
-                ui.horizontal(|ui| {
-                    ui.label(self.translations.get("filename", display_language));
-                    ui.text_edit_singleline(&mut self.history_filename);
-                    if ui
-                        .button(self.translations.get("save_history", display_language))
-                        .clicked()
-                    {
-                        self.save_history();
-                    }
-                });
-            }
-
-            // Show mod creator if requested
-            if self.show_mod_creator {
-                ui.separator();
-                ui.heading(self.translations.get("create_mod_heading", display_language));
-
-                // Show success message if any
-                if !self.mod_creator.success_message.is_empty() {
-                    ui.colored_label(egui::Color32::GREEN, &self.mod_creator.success_message);
-                }
-
-                // Show error message if any
-                if !self.mod_creator.error_message.is_empty() {
-                    ui.colored_label(egui::Color32::RED, &self.mod_creator.error_message);
-                }
-
-                ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_id", display_language));
-                    ui.text_edit_singleline(&mut self.mod_creator.mod_id);
+                    ui.label(self.translations.get("result", display_language));
+                    ui.label(&self.result);
                 });
 
+                // Memory display
                 ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_name", display_language));
-                    ui.text_edit_singleline(&mut self.mod_creator.name);
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_description", display_language));
-                    ui.text_edit_singleline(&mut self.mod_creator.description);
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_type", display_language));
-                    let selected_text = if self.mod_creator.mod_type == "fun" {
-                        self.translations.get("mod_type_function", display_language)
+                    // Get the translated memory label and remove the (m) part if present, then add colon
+                    let memory_label = self.translations.get("memory", display_language);
+                    let display_label = if memory_label.ends_with(" (m):") {
+                        format!("{}:", &memory_label[..memory_label.len() - 5])
+                    } else if memory_label.ends_with(" (m)") {
+                        format!("{}:", &memory_label[..memory_label.len() - 4])
                     } else {
-                        self.translations.get("mod_type_constant", display_language)
+                        memory_label
                     };
+                    ui.label(display_label);
+                    ui.label(self.memory.to_string());
+                });
 
-                    egui::ComboBox::from_id_source("mod_type")
-                        .selected_text(selected_text)
-                        .show_ui(ui, |ui: &mut egui::Ui| {
-                            ui.selectable_value(
-                                &mut self.mod_creator.mod_type,
-                                "fun".to_string(),
-                                self.translations.get("mod_type_function", display_language),
-                            );
-                            ui.selectable_value(
-                                &mut self.mod_creator.mod_type,
-                                "num".to_string(),
-                                self.translations.get("mod_type_constant", display_language),
-                            );
+                // Language selector
+                ui.horizontal(|ui| {
+                    ui.label(self.translations.get("language_label", display_language));
+                    egui::ComboBox::from_id_source("language_selector")
+                        .selected_text(self.get_language_display_name(self.language, display_language))
+                        .show_ui(ui, |ui| {
+                            for lang in Language::all() {
+                                let display_text = self.get_language_display_name(lang, display_language);
+                                ui.selectable_value(&mut self.language, lang, display_text);
+                            }
                         });
                 });
 
-                // Show different fields based on mod type
-                if self.mod_creator.mod_type == "fun" {
-                    ui.horizontal(|ui| {
-                        ui.label(self.translations.get("mod_required_vars", display_language));
-                        ui.text_edit_singleline(&mut self.mod_creator.required_vars);
-                    });
+                // Controls
+                ui.separator();
 
-                    ui.horizontal(|ui| {
-                        ui.label(self.translations.get("mod_expression", display_language));
-                        ui.text_edit_singleline(&mut self.mod_creator.expression);
-                    });
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label(self.translations.get("mod_constant_value", display_language));
-                        ui.text_edit_singleline(&mut self.mod_creator.constant_value);
-                    });
-                }
+                ui.horizontal_wrapped(|ui| {
+                    if ui.button(self.translations.get("history", display_language)).clicked() {
+                        self.show_history = !self.show_history;
+                    }
 
-                ui.horizontal(|ui| {
-                    ui.label(self.translations.get("mod_filename", display_language));
-                    ui.text_edit_singleline(&mut self.mod_creator.filename);
+                    if ui
+                        .button(self.translations.get("clear_history", display_language))
+                        .clicked()
+                    {
+                        self.clear_history();
+                    }
+
+                    if ui.button(self.translations.get("settings", display_language)).clicked() {
+                        self.show_settings = !self.show_settings;
+                    }
+
+                    if ui
+                        .button(self.translations.get("show_mods", display_language))
+                        .clicked()
+                    {
+                        self.show_mod_list = !self.show_mod_list;
+                    }
+
+                    if ui
+                        .button(self.translations.get("create_mod", display_language))
+                        .clicked()
+                    {
+                        self.show_mod_creator = !self.show_mod_creator;
+                    }
+
+                    if ui.button(self.translations.get("exit", display_language)).clicked() {
+                        std::process::exit(0);
+                    }
                 });
 
-                if ui.button(self.translations.get("save_mod", display_language)).clicked() {
-                    self.save_mod();
+                // Show settings if requested
+                if self.show_settings {
+                    ui.separator();
+                    ui.heading(self.translations.get("settings_heading", display_language));
+                    ui.horizontal(|ui| {
+                        if ui
+                            .checkbox(
+                                &mut self.settings.safe_mode,
+                                self.translations.get("safe_mode", display_language),
+                            )
+                            .changed()
+                        {
+                            self.evaluator.set_safe_mode(self.settings.safe_mode);
+                        }
+                        ui.label("(Uncheck for extended functionality)");
+                    });
                 }
 
-                if ui.button(self.translations.get("cancel", display_language)).clicked() {
-                    self.show_mod_creator = false;
-                    self.mod_creator = ModCreator::default();
-                }
-            }
+                // Show history if requested
+                if self.show_history {
+                    ui.separator();
+                    ui.heading(self.translations.get("history_heading", display_language));
+                    ui.label(self.history.to_string());
 
-            // Show mod list if requested
-            if self.show_mod_list {
-                ui.separator();
-                ui.heading(self.translations.get("loaded_mods", display_language));
-
-                // Get list of mods
-                let mod_list = self.evaluator.list_mods();
-                if mod_list.is_empty() {
-                    ui.label(self.translations.get("no_mods_loaded", display_language));
-                } else {
-                    // Create a scrollable area for the mod list
-                    egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-                        for mod_name in mod_list {
-                            // Get mod details
-                            if let Some(mod_def) = self.evaluator.get_mod(&mod_name) {
-                                let display_name = mod_def.desc.name.clone().unwrap_or_else(|| mod_name.clone());
-                                ui.horizontal(|ui| {
-                                    ui.label(format!(
-                                        "{}: {}",
-                                        self.translations.get("mod_id_display", display_language),
-                                        mod_name
-                                    ));
-                                    ui.label(format!(
-                                        "{}: {}",
-                                        self.translations.get("mod_name_display", display_language),
-                                        display_name
-                                    ));
-                                });
-                                ui.separator();
-                            }
+                    // Add option to save history to file
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("filename", display_language));
+                        ui.text_edit_singleline(&mut self.history_filename);
+                        if ui
+                            .button(self.translations.get("save_history", display_language))
+                            .clicked()
+                        {
+                            self.save_history();
                         }
                     });
                 }
-            }
 
-            // Add some spacing
-            ui.allocate_space(egui::Vec2::new(1.0, 10.0));
+                // Show mod creator if requested
+                if self.show_mod_creator {
+                    ui.separator();
+                    ui.heading(self.translations.get("create_mod_heading", display_language));
+
+                    // Show success message if any
+                    if !self.mod_creator.success_message.is_empty() {
+                        ui.colored_label(egui::Color32::GREEN, &self.mod_creator.success_message);
+                    }
+
+                    // Show error message if any
+                    if !self.mod_creator.error_message.is_empty() {
+                        ui.colored_label(egui::Color32::RED, &self.mod_creator.error_message);
+                    }
+
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("mod_id", display_language));
+                        ui.text_edit_singleline(&mut self.mod_creator.mod_id);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("mod_name", display_language));
+                        ui.text_edit_singleline(&mut self.mod_creator.name);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("mod_description", display_language));
+                        ui.text_edit_singleline(&mut self.mod_creator.description);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("mod_type", display_language));
+                        let selected_text = if self.mod_creator.mod_type == "fun" {
+                            self.translations.get("mod_type_function", display_language)
+                        } else {
+                            self.translations.get("mod_type_constant", display_language)
+                        };
+
+                        egui::ComboBox::from_id_source("mod_type")
+                            .selected_text(selected_text)
+                            .show_ui(ui, |ui: &mut egui::Ui| {
+                                ui.selectable_value(
+                                    &mut self.mod_creator.mod_type,
+                                    "fun".to_string(),
+                                    self.translations.get("mod_type_function", display_language),
+                                );
+                                ui.selectable_value(
+                                    &mut self.mod_creator.mod_type,
+                                    "num".to_string(),
+                                    self.translations.get("mod_type_constant", display_language),
+                                );
+                            });
+                    });
+
+                    // Show different fields based on mod type
+                    if self.mod_creator.mod_type == "fun" {
+                        ui.horizontal(|ui| {
+                            ui.label(self.translations.get("mod_required_vars", display_language));
+                            ui.text_edit_singleline(&mut self.mod_creator.required_vars);
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label(self.translations.get("mod_expression", display_language));
+                            ui.text_edit_singleline(&mut self.mod_creator.expression);
+                        });
+                    } else {
+                        ui.horizontal(|ui| {
+                            ui.label(self.translations.get("mod_constant_value", display_language));
+                            ui.text_edit_singleline(&mut self.mod_creator.constant_value);
+                        });
+                    }
+
+                    ui.horizontal(|ui| {
+                        ui.label(self.translations.get("mod_filename", display_language));
+                        ui.text_edit_singleline(&mut self.mod_creator.filename);
+                    });
+
+                    if ui.button(self.translations.get("save_mod", display_language)).clicked() {
+                        self.save_mod();
+                    }
+
+                    if ui.button(self.translations.get("cancel", display_language)).clicked() {
+                        self.show_mod_creator = false;
+                        self.mod_creator = ModCreator::default();
+                    }
+                }
+
+                // Show mod list if requested
+                if self.show_mod_list {
+                    ui.separator();
+                    ui.heading(self.translations.get("loaded_mods", display_language));
+
+                    // Get list of mods
+                    let mod_list = self.evaluator.list_mods();
+                    if mod_list.is_empty() {
+                        ui.label(self.translations.get("no_mods_loaded", display_language));
+                    } else {
+                        // Create a scrollable area for the mod list
+                        egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
+                            for mod_name in mod_list {
+                                // Get mod details
+                                if let Some(mod_def) = self.evaluator.get_mod(&mod_name) {
+                                    let display_name = mod_def.desc.name.clone().unwrap_or_else(|| mod_name.clone());
+                                    ui.horizontal(|ui| {
+                                        ui.label(format!(
+                                            "{}: {}",
+                                            self.translations.get("mod_id_display", display_language),
+                                            mod_name
+                                        ));
+                                        ui.label(format!(
+                                            "{}: {}",
+                                            self.translations.get("mod_name_display", display_language),
+                                            display_name
+                                        ));
+                                    });
+                                    ui.separator();
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Add some spacing
+                ui.allocate_space(egui::Vec2::new(1.0, 10.0));
+            }); // End of ScrollArea
         });
     }
 }
