@@ -110,6 +110,7 @@ jobs:
           echo "SCCACHE_NO_DAEMON=1" >> $GITHUB_ENV
           echo "sccache probe failed, disabling sccache for build."
         fi
+
     - name: Cache Cargo registry
       uses: actions/cache@v4
       with:
@@ -133,12 +134,31 @@ jobs:
     - name: Check formatting
       run: cargo fmt --check
       
-    - name: Build and test
+    - name: Run tests
       run: cargo test --release --verbose
-      
-    - name: Upload artifacts
+
+    # === macOS: 打包成 .app 并包含图标 ===
+    - name: Bundle macOS App (with icon)
+      if: matrix.os == 'macos-latest'
+      run: |
+        cargo install cargo-bundle
+        cargo bundle --release
+
+    # === 上传产物 ===
+    - name: Upload Linux/Windows artifact
+      if: matrix.os != 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: calculator-max-${{ matrix.os }}
         path: |
           target/release/calculator-max${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+    - name: Upload macOS .app as ZIP
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd target/bundle/osx
+        zip -r calculator-max-macos.zip calculator-max.app
+      uses: actions/upload-artifact@v4
+      with:
+        name: calculator-max-macos
+        path: target/bundle/osx/calculator-max-macos.zip

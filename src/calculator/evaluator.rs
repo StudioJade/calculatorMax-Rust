@@ -39,6 +39,7 @@ impl Evaluator {
         // Add trigonometric functions
         ctx.func("sin", sin);
         ctx.func("cos", cos);
+        ctx.func("csin", csin);
         ctx.func("tan", tan);
         ctx.func("asin", asin);
         ctx.func("acos", acos);

@@ -65,6 +65,10 @@ pub fn cos(x: f64) -> f64 {
     x.cos()
 }
 
+pub fn csin(x: f64) -> f64 {
+    x.sin().cos()
+}
+
 pub fn tan(x: f64) -> f64 {
     x.tan()
 }

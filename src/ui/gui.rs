@@ -253,6 +253,7 @@ impl CalculatorApp {
                 let builtin_functions = [
                     "sin",
                     "cos",
+                    "csin",
                     "tan",
                     "asin",
                     "acos",
