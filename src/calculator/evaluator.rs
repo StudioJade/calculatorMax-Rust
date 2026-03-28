@@ -25,6 +25,9 @@ pub struct Evaluator {
 
     /// Result cache for performance optimization
     result_cache: HashMap<String, f64>,
+
+    /// Last calculation result (for 'm' constant)
+    last_result: f64,
 }
 
 impl Evaluator {
@@ -35,6 +38,7 @@ impl Evaluator {
         // Add mathematical constants
         ctx.var("pi", pi());
         ctx.var("e", e());
+        ctx.var("m", 0.0); // Last result (memory)
 
         // Add trigonometric functions
         ctx.func("sin", sin);
@@ -96,12 +100,24 @@ impl Evaluator {
             mod_manager,
             expr_cache: HashMap::new(),
             result_cache: HashMap::new(),
+            last_result: 0.0,
         }
     }
 
     /// Sets the evaluation mode
     pub fn set_safe_mode(&mut self, safe: bool) {
         self.safe_mode = safe;
+    }
+
+    /// Sets the last result (updates 'm' constant)
+    pub fn set_last_result(&mut self, result: f64) {
+        self.last_result = result;
+        self.context.var("m", result);
+    }
+
+    /// Gets the last result
+    pub fn get_last_result(&self) -> f64 {
+        self.last_result
     }
 
     /// Reload all mods
@@ -169,6 +185,8 @@ impl Evaluator {
                 Ok(result) => {
                     // 缓存结果
                     self.result_cache.insert(cache_key, result);
+                    // 更新最近结果 (m 常量)
+                    self.set_last_result(result);
                     Ok(result)
                 }
                 Err(e) => bail!("Evaluation error: {}", e),
@@ -178,7 +196,11 @@ impl Evaluator {
             // For now, we'll just use the same safe evaluation
             match expression.parse::<Expr>() {
                 Ok(expr) => match expr.eval_with_context(&self.context) {
-                    Ok(result) => Ok(result),
+                    Ok(result) => {
+                        // 更新最近结果 (m 常量)
+                        self.set_last_result(result);
+                        Ok(result)
+                    }
                     Err(e) => bail!("Evaluation error: {}", e),
                 },
                 Err(e) => bail!("Parse error: {}", e),
