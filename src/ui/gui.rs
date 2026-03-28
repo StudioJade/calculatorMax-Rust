@@ -527,7 +527,15 @@ impl CalculatorApp {
             format!("{}.cmfun", self.mod_creator.filename)
         };
 
-        match std::fs::write(format!("mods/{}", filename), toml_content) {
+        // Create mods directory if it doesn't exist
+        let mods_dir = std::path::Path::new("mods");
+        if let Err(e) = std::fs::create_dir_all(mods_dir) {
+            self.mod_creator.error_message = format!("Failed to create mods directory: {}", e);
+            return;
+        }
+
+        let file_path = mods_dir.join(&filename);
+        match std::fs::write(&file_path, toml_content) {
             Ok(_) => {
                 self.mod_creator.success_message = format!("Mod saved to {}", filename);
                 // Reload mods in the evaluator
