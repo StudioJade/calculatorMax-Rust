@@ -7,6 +7,7 @@ use crate::calculator::mods::SimplifiedMod;
 use crate::calculator::{Evaluator, HistoryManager};
 use crate::config::Settings;
 use crate::i18n::translations::{Language, Translations};
+use crate::memory::Memory;
 
 /// Runs the GUI application
 pub fn run_gui() -> Result<()> {
@@ -109,14 +110,11 @@ struct CalculatorApp {
     /// Whether to show history
     show_history: bool,
 
+    /// Memory
+    memory_manager: Memory,
+
     /// Memory value (like 'm' in the Python version)
     memory: f64,
-
-    /// Whether to show settings
-    show_settings: bool,
-
-    /// Filename for saving history
-    history_filename: String,
 
     /// Current language
     language: Language,
@@ -183,18 +181,32 @@ impl Default for CalculatorApp {
         let evaluator = Evaluator::default();
         let warnings: Vec<String> = evaluator.get_warnings().to_vec();
 
+        // Load memory from file
+        let memory_manager = Memory::load().unwrap_or_else(|e| {
+            eprintln!("Failed to load memory: {}", e);
+            Memory::new()
+        });
+
+        // Restore memory value
+        let memory = memory_manager.get_memory_value();
+
+        // Restore history
+        let mut history = HistoryManager::default();
+        for (expr, result) in memory_manager.get_history().iter() {
+            history.add(expr.clone(), result.clone());
+        }
+
         Self {
             expression: String::new(),
             result: String::new(),
             error: String::new(),
             warnings,
-            history: HistoryManager::default(),
+            history,
             settings: Settings::default(),
             evaluator,
             show_history: false,
-            memory: 0.0,
-            show_settings: false,
-            history_filename: String::new(),
+            memory_manager,
+            memory,
             language: detected_language,
             translations: Translations::default(),
             show_mod_creator: false,
@@ -354,6 +366,14 @@ impl CalculatorApp {
                 self.history.add(self.expression.clone(), self.result.clone());
                 // Store in memory
                 self.memory = value;
+                // Update memory manager
+                self.memory_manager.set_memory_value(value);
+                self.memory_manager
+                    .add_to_history(self.expression.clone(), self.result.clone());
+                // Save memory to file
+                if let Err(e) = self.memory_manager.save() {
+                    eprintln!("Failed to save memory: {}", e);
+                }
             }
             Err(e) => {
                 self.error = e.to_string();
@@ -365,22 +385,9 @@ impl CalculatorApp {
     /// Clears the history
     fn clear_history(&mut self) {
         self.history.clear();
-    }
-
-    /// Saves history to file
-    fn save_history(&mut self) {
-        if self.history_filename.is_empty() {
-            self.error = "Please enter a filename".to_string();
-            return;
-        }
-
-        match self.history.save_to_file(&self.history_filename) {
-            Ok(_) => {
-                self.error = format!("History saved to {}", self.history_filename);
-            }
-            Err(e) => {
-                self.error = format!("Failed to save history: {}", e);
-            }
+        self.memory_manager.clear_history();
+        if let Err(e) = self.memory_manager.save() {
+            eprintln!("Failed to save memory: {}", e);
         }
     }
 
@@ -740,10 +747,6 @@ impl eframe::App for CalculatorApp {
                         self.clear_history();
                     }
 
-                    if ui.button(self.translations.get("settings", display_language)).clicked() {
-                        self.show_settings = !self.show_settings;
-                    }
-
                     if ui
                         .button(self.translations.get("show_mods", display_language))
                         .clicked()
@@ -763,41 +766,28 @@ impl eframe::App for CalculatorApp {
                     }
                 });
 
-                // Show settings if requested
-                if self.show_settings {
-                    ui.separator();
-                    ui.heading(self.translations.get("settings_heading", display_language));
-                    ui.horizontal(|ui| {
-                        if ui
-                            .checkbox(
-                                &mut self.settings.safe_mode,
-                                self.translations.get("safe_mode", display_language),
-                            )
-                            .changed()
-                        {
-                            self.evaluator.set_safe_mode(self.settings.safe_mode);
-                        }
-                        ui.label("(Uncheck for extended functionality)");
-                    });
-                }
+                // Show settings
+                ui.separator();
+                ui.heading(self.translations.get("settings_heading", display_language));
+                ui.horizontal(|ui| {
+                    if ui
+                        .checkbox(
+                            &mut self.settings.safe_mode,
+                            self.translations.get("safe_mode", display_language),
+                        )
+                        .changed()
+                    {
+                        self.evaluator.set_safe_mode(self.settings.safe_mode);
+                    }
+                    ui.label("(Uncheck for extended functionality)");
+                });
 
                 // Show history if requested
                 if self.show_history {
                     ui.separator();
                     ui.heading(self.translations.get("history_heading", display_language));
                     ui.label(self.history.to_string());
-
-                    // Add option to save history to file
-                    ui.horizontal(|ui| {
-                        ui.label(self.translations.get("filename", display_language));
-                        ui.text_edit_singleline(&mut self.history_filename);
-                        if ui
-                            .button(self.translations.get("save_history", display_language))
-                            .clicked()
-                        {
-                            self.save_history();
-                        }
-                    });
+                    ui.label(self.translations.get("history_auto_saved", display_language));
                 }
 
                 // Show mod creator if requested

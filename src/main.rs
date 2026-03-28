@@ -9,6 +9,7 @@ use anyhow::Result;
 pub mod calculator;
 pub mod config;
 pub mod i18n;
+pub mod memory;
 
 // UI module is optional (feature = "gui") to speed up builds during development.
 // When GUI feature is disabled, provide a no-op run function so tests and library

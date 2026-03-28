@@ -13,6 +13,7 @@
   "filename": "Имя файла:",
   "settings_heading": "Настройки",
   "history_heading": "История",
+  "history_auto_saved": "История автоматически сохраняется",
   "create_mod": "Создать мод",
   "show_mods": "Показать моды",
   "create_mod_heading": "Создать новый мод",

@@ -29,6 +29,9 @@ thiserror = "1.0"
 # System locale detection
 sys-locale = "0.3"
 
+# System directories
+dirs = "5.0"
+
 [features]
 # Keep GUI enabled by default for normal builds; disable with --no-default-features for a faster dev build
 default = ["gui", "embedded-fonts"]
