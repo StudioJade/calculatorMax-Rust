@@ -153,11 +153,14 @@ jobs:
         path: |
           target/release/calculator-max${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
-    - name: Upload macOS .app as ZIP
+    - name: Package macOS .app as ZIP
       if: matrix.os == 'macos-latest'
       run: |
         cd target/bundle/osx
         zip -r calculator-max-macos.zip calculator-max.app
+
+    - name: Upload macOS .app as ZIP
+      if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: calculator-max-macos
