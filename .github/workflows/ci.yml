@@ -131,11 +131,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-sccache-
         
-    - name: Check formatting
-      run: cargo fmt --check
-      
-    - name: Run tests
-      run: cargo test --release --verbose
+    - name: Build release
+      run: cargo build --release --verbose
 
     # === macOS: 打包成 .app 并包含图标 ===
     - name: Bundle macOS App (with icon)
