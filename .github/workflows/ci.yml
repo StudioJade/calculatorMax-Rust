@@ -126,12 +126,17 @@ jobs:
     - name: Build release
       run: cargo build --release --verbose
 
-    # === macOS: 打包成 .app 并包含图标 ===
-    - name: Bundle macOS App (with icon)
+    - name: Bundle macOS App
       if: matrix.os == 'macos-latest'
       run: |
         cargo install cargo-bundle
         cargo bundle --release
+
+    - name: Package macOS artifact
+      if: matrix.os == 'macos-latest'
+      run: |
+        cd target/bundle/osx
+        zip -r calculator-max-macos.zip calculator-max.app
 
     # === 上传产物 ===
     - name: Upload Linux/Windows artifact
@@ -142,18 +147,13 @@ jobs:
         path: |
           target/release/calculator-max${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
-    - name: Package macOS .app as ZIP
+    - name: Package macOS artifact
       if: matrix.os == 'macos-latest'
       run: |
-        if [ -d "target/bundle/osx" ]; then
-          cd target/bundle/osx
-          zip -r calculator-max-macos.zip calculator-max.app
-        else
-          echo "Warning: target/bundle/osx directory not found"
-          exit 1
-        fi
+        cd target/release
+        zip -r calculator-max-macos.zip calculator-max
 
-    - name: Upload macOS .app as ZIP
+    - name: Upload macOS artifact
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
