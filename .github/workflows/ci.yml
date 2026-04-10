@@ -69,14 +69,6 @@ jobs:
           cargo check --no-default-features --all-targets --all-features --verbose
           cargo test --no-default-features --verbose
 
-      - name: Upload fast-check logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: fast-check-logs
-          path: |
-            target/debug/**
-
   build:
     strategy:
       matrix:
