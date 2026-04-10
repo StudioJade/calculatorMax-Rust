@@ -145,8 +145,13 @@ jobs:
     - name: Package macOS .app as ZIP
       if: matrix.os == 'macos-latest'
       run: |
-        cd target/bundle/osx
-        zip -r calculator-max-macos.zip calculator-max.app
+        if [ -d "target/bundle/osx" ]; then
+          cd target/bundle/osx
+          zip -r calculator-max-macos.zip calculator-max.app
+        else
+          echo "Warning: target/bundle/osx directory not found"
+          exit 1
+        fi
 
     - name: Upload macOS .app as ZIP
       if: matrix.os == 'macos-latest'
